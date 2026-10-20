@@ -1,7 +1,7 @@
 # Estrutura do Banco de Dados (proposta)
 
 Planejamento – nada implementado ainda. Banco sugerido: **PostgreSQL**
-(relacional, transações para reserva de horários, `jsonb` para dados
+(relacional, transações para mudanças de status consistentes, `jsonb` para dados
 flexíveis coletados pelo bot). Requisitos em [`REQUISITOS.md`](REQUISITOS.md).
 
 Convenções:
@@ -29,15 +29,11 @@ erDiagram
     pacientes ||--o{ paciente_telefones : ""
     pacientes ||--o{ paciente_servicos : ""
     servicos  ||--o{ paciente_servicos : ""
-    pacientes ||--o| paciente_dados_prontuario : ""
+    pacientes ||--o| paciente_dados_cadastrais : ""
     pacientes ||--o{ consentimentos : ""
-
-    servicos ||--o{ agendas : ""
-    agendas  ||--o{ agenda_horarios : ""
 
     pacientes ||--o{ agendamentos : ""
     servicos  ||--o{ agendamentos : ""
-    agenda_horarios ||--o| agendamentos : "reserva"
     agendamentos ||--o{ agendamento_eventos : "histórico"
     agendamentos ||--o| agendamentos : "remarcado de"
 
@@ -66,8 +62,8 @@ Agrupamento:
 | Grupo | Tabelas |
 |---|---|
 | Acesso | `perfis`, `permissoes`, `perfil_permissoes`, `usuarios`, `equipes`, `usuario_equipes` |
-| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `paciente_dados_prontuario`, `consentimentos` |
-| Agenda | `agendas`, `agenda_horarios`, `agendamentos`, `agendamento_eventos` |
+| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `paciente_dados_cadastrais`, `consentimentos` |
+| Agenda | `agendamentos`, `agendamento_eventos` |
 | Mensagens | `modelos_mensagem`, `comunicacoes`, `campanhas`, `campanha_destinatarios`, `orientacoes`, `formularios` |
 | Conversa | `conversas`, `mensagens`, `anexos` |
 | Trabalho da equipe | `atendimentos_humanos`, `pendencias`, `notificacoes` |
@@ -106,7 +102,7 @@ Lista fixa de ações verificadas pela API, no formato `recurso.acao`:
 `pacientes.importar`, `pacientes.exportar`, `agendamentos.gerenciar`,
 `agendamentos.marcar_realizado`, `campanhas.enviar`, `fila.atender`,
 `fila.transferir`, `prontuario.registrar`, `telefones.validar`,
-`agenda.ver`, `disponibilidade.gerenciar`, `relatorios.ver`,
+`agenda.ver`, `relatorios.ver`,
 `relatorios.completos`, `admin.mensagens`, `admin.orientacoes`,
 `admin.formularios`, `admin.servicos`, `admin.prazos`, `admin.horarios`,
 `admin.usuarios`, `admin.equipes`, `admin.permissoes`, `auditoria.ver`,
@@ -121,7 +117,7 @@ a matriz da seção 3.9 de `REQUISITOS.md`; Admin pode ajustar.
 | Coluna | Tipo | Observação |
 |---|---|---|
 | id | uuid PK | |
-| nome | text | Saúde Digital, Pesquisa FA, Abertura de prontuário, Aconselhamento genético |
+| nome | text | Saúde Digital, Pesquisa FA, Aconselhamento genético |
 | descricao | text | |
 
 ### `usuario_equipes`
@@ -141,11 +137,9 @@ várias equipes (define quais filas ele vê).
 | equipe_id | FK equipes | fila padrão dos encaminhamentos |
 | exibir_no_menu | bool | aparece na pergunta "qual serviço?" |
 | ordem_menu | int | |
-| exige_prontuario | bool | |
-| permite_autoagendamento | bool | bot oferece horários (seção 4.3) |
-| permite_remarcacao_automatica | bool | seção 4.7 |
-| max_remarcacoes_automaticas | int | sugestão 1 |
-| dias_antes_procedimento | int null | regra "teleconsulta 7 dias antes" |
+| dias_antes_procedimento | int null | regra "teleconsulta 7 dias antes" – só para **sugerir** a data à equipe |
+| duracao_padrao_min | int | duração usada ao criar o agendamento |
+| link_padrao | text null | link fixo da sala, se houver |
 | orientacoes_padrao | text | entra na confirmação |
 | modelo_confirmacao_id | FK modelos_mensagem null | null = modelo genérico 3.1 |
 | link_minutos_antes | int | quando enviar o link (msg 7), ex.: 10 |
@@ -162,8 +156,7 @@ várias equipes (define quais filas ele vê).
 | cpf | varchar(11) null unique | só dígitos; pacientes da regulação podem não ter |
 | cartao_sus | varchar(15) null unique | |
 | data_nascimento | date | validação de identidade |
-| prontuario | text null unique | nº do prontuário do hospital |
-| status_prontuario | enum | `nao_verificado`, `possui`, `nao_possui`, `em_abertura` |
+| prontuario | text null unique | nº do prontuário do hospital – **opcional**, preenchido só se o paciente tiver; nenhum fluxo depende dele |
 | origem | enum | `regulacao`, `mutirao`, `base_procape`, `contato_espontaneo`, `importacao` |
 | numero_solicitacao | text null | nº da regulação |
 | observacoes | text | uso interno da equipe |
@@ -203,8 +196,9 @@ cuida de dois pacientes) → o bot pergunta de quem se trata.
 Permite saber, quando o paciente escreve, em que serviço ele está ativo e
 sugerir no menu.
 
-### `paciente_dados_prontuario`
-Dados coletados para abertura do prontuário (**[PENDENTE]** lista final).
+### `paciente_dados_cadastrais`
+Dados complementares coletados pelo bot ou pela equipe, todos opcionais
+(**[PENDENTE]** lista final). Não bloqueiam nenhum fluxo.
 | Coluna | Tipo | Observação |
 |---|---|---|
 | paciente_id | PK/FK | |
@@ -227,22 +221,9 @@ Dados coletados para abertura do prontuário (**[PENDENTE]** lista final).
 
 ## 4. Agenda
 
-### `agendas`
-Uma agenda por serviço/tipo (ex.: "Teleconsulta pré-cateterismo").
-`id`, `servico_id`, `nome`, `tipo_agendamento` (enum abaixo),
-`duracao_padrao_min`, `link_padrao` (null), `ativo`.
-
-### `agenda_horarios` (disponibilidade)
-| Coluna | Tipo | Observação |
-|---|---|---|
-| id | uuid PK | |
-| agenda_id | FK | |
-| inicio / fim | timestamptz | |
-| capacidade | int | normalmente 1 |
-| ocupados | int | atualizado na reserva (transação + `SELECT … FOR UPDATE`) |
-| status | enum | `livre`, `lotado`, `bloqueado` |
-
-Gerado pela equipe (ex.: "toda sexta 14h–15h30, a cada 30 min").
+Não há tabela de disponibilidade: **a equipe define dia e hora** ao criar o
+agendamento (sem autoagendamento e sem remarcação automática). A agenda é a
+visão em calendário dos próprios `agendamentos`.
 
 ### `agendamentos`
 | Coluna | Tipo | Observação |
@@ -252,13 +233,13 @@ Gerado pela equipe (ex.: "toda sexta 14h–15h30, a cada 30 min").
 | servico_id | FK | |
 | tipo | enum `tipo_agendamento` | `teleconsulta`, `procedimento`, `consulta_presencial` |
 | descricao | text | ex.: "Cateterismo", "Teleconsulta de acompanhamento" |
-| horario_id | FK agenda_horarios null | quando veio da disponibilidade |
 | data_hora | timestamptz null | null enquanto `solicitado` |
 | duracao_min | int | |
 | link_teleconsulta | text null | |
 | orientacoes | text | copiado do serviço, editável |
 | status | enum `status_agendamento` | ver abaixo |
-| origem | enum | `equipe`, `bot_autoagendamento`, `campanha`, `remarcacao` |
+| origem | enum | `equipe`, `campanha`, `solicitacao_bot` (paciente pediu pelo bot; equipe definiu a data), `remarcacao` |
+| preferencia_paciente | text null | ex.: "Tarde" – informado ao pedir agendamento/remarcação |
 | remarcado_de_id | FK agendamentos null | encadeia o histórico de remarcações |
 | campanha_id | FK null | |
 | confirmado_em, cancelado_em | timestamptz null | |
@@ -276,8 +257,7 @@ Gerado pela equipe (ex.: "toda sexta 14h–15h30, a cada 30 min").
 
 | Valor | Cor | Significado |
 |---|---|---|
-| `solicitado` | 🟣 | pedido do paciente aguardando a equipe (sem data) |
-| `pendente_equipe` | 🟣 | depende de etapa da equipe (ex.: prontuário) |
+| `solicitado` | 🟣 | pedido do paciente aguardando a equipe definir a data |
 | `aguardando_confirmacao` | ⚪ | mensagem enviada |
 | `confirmado` | 🟢 | |
 | `remarcacao_solicitada` | 🟡 | |
@@ -290,10 +270,8 @@ Gerado pela equipe (ex.: "toda sexta 14h–15h30, a cada 30 min").
 ```mermaid
 stateDiagram-v2
     [*] --> solicitado: paciente pede
-    [*] --> aguardando_confirmacao: equipe/bot agenda
-    solicitado --> pendente_equipe: falta prontuário
-    pendente_equipe --> aguardando_confirmacao
-    solicitado --> aguardando_confirmacao
+    [*] --> aguardando_confirmacao: equipe agenda
+    solicitado --> aguardando_confirmacao: equipe define a data
     aguardando_confirmacao --> confirmado
     aguardando_confirmacao --> remarcacao_solicitada
     aguardando_confirmacao --> cancelado
@@ -302,7 +280,7 @@ stateDiagram-v2
     sem_resposta --> cancelado: regra Saúde Digital
     confirmado --> remarcacao_solicitada
     confirmado --> cancelado
-    remarcacao_solicitada --> remarcado: novo agendamento criado
+    remarcacao_solicitada --> remarcado: equipe define nova data
     confirmado --> realizado
     confirmado --> faltou
 ```
@@ -367,7 +345,7 @@ houve resposta, status e necessidade de intervenção.
 | status_entrega | enum | `programada`, `enviada`, `entregue`, `lida`, `falhou`, `cancelada` |
 | espera_resposta | bool | |
 | respondida_em | timestamptz null | |
-| resposta | text null | ex.: `confirmou`, `remarcar`, `cancelar`, `escolheu_horario` |
+| resposta | text null | ex.: `confirmou`, `remarcar`, `cancelar`, `quero_agendar` |
 | requer_equipe | bool | true quando esgotou os lembretes |
 
 Consulta típica: "primeiro contato em 18/10, lembrete 1 em 19/10, lembrete
@@ -406,7 +384,7 @@ nova mensagem depois disso abre nova conversa.
 | servico_id | FK null | serviço identificado |
 | origem | enum | `paciente` (ele iniciou), `ativo` (PROCAPE iniciou: campanha/agendamento) |
 | estado | enum `estado_conversa` | `bot`, `aguardando_equipe`, `em_atendimento`, `encerrada` |
-| etapa_fluxo | text | nó atual da máquina de estados do bot (ex.: `identificacao.cpf`, `menu`, `agendamento.escolher_horario`) |
+| etapa_fluxo | text | nó atual da máquina de estados do bot (ex.: `identificacao.cpf`, `menu`, `remarcacao.preferencia`) |
 | dados_coletados | jsonb | respostas parciais do fluxo (nome, CPF digitado, horário escolhido…) |
 | tentativas_nao_entendidas | int | após 2 → encaminha |
 | identidade_validada | bool | passou pela validação nesta conversa |
@@ -483,7 +461,7 @@ depender da **equipe** ou do **paciente** (mensagem 8.3).
 |---|---|---|
 | id | uuid PK | |
 | paciente_id | FK | |
-| tipo | enum | `abrir_prontuario`, `validar_telefone`, `ligar_sem_resposta`, `agendar_solicitacao`, `conferir_dados`, `paciente_enviar_documento`, `paciente_enviar_informacao`, `outro` |
+| tipo | enum | `agendar` (definir data de solicitação ou remarcação), `validar_telefone`, `ligar_sem_resposta`, `conferir_dados`, `paciente_enviar_documento`, `paciente_enviar_informacao`, `outro` |
 | responsavel | enum | `equipe`, `paciente` |
 | equipe_id | FK | equipe que acompanha (mesmo quando depende do paciente) |
 | solicitacao_paciente | text null | texto de `{{pendencia_descricao}}` ("cópia do exame de sangue") |
@@ -493,7 +471,7 @@ depender da **equipe** ou do **paciente** (mensagem 8.3).
 | resposta_mensagem_id | FK mensagens null | mensagem/anexo com que o paciente atendeu |
 | prazo | timestamptz null | |
 | responsavel_id | FK usuarios null | |
-| concluida_em / concluida_por | | ao concluir `abrir_prontuario`, o sistema retoma o fluxo do paciente |
+| concluida_em / concluida_por | | `agendar` é concluída automaticamente quando a equipe salva o agendamento |
 
 ### `notificacoes`
 `id`, `usuario_id` (null = toda a equipe), `equipe_id`, `tipo`
@@ -560,8 +538,8 @@ Chave/valor (`jsonb`) editável pela coordenação:
 ---
 
 ## 10. Pontos em aberto que afetam o banco
-1. Campos para abertura de prontuário.
+1. Campos de `paciente_dados_cadastrais` que o bot deve coletar.
 2. CPF obrigatório ou Cartão SUS aceito.
-3. Integração com o sistema do hospital (prontuário/agenda) – se houver,
-   `prontuario` e `agenda_horarios` passam a ser sincronizados.
+3. Integração com o sistema do hospital – se houver no futuro, `prontuario`
+   pode ser preenchido automaticamente.
 4. Política de retenção (por quanto tempo guardar conversas e anexos).

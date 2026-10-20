@@ -24,8 +24,9 @@ editável na área administrativa.
 | P6 | **Respostas por botões ou lista**, nunca texto livre quando houver opções | O bot entende com segurança; menos encaminhamentos por "não entendido" |
 | P7 | **Confirmação de presença com 3 botões**: Confirmo minha presença · Preciso remarcar · Cancelar | Limite do WhatsApp é 3 botões; cobre o cancelamento previsto |
 | P8 | **"👩‍⚕️ Falar com a equipe"** disponível em toda mensagem de sessão que tenha lista | Requisito "sempre disponibilizar" |
-| P9 | O bot **não promete o que depende da equipe** ("agendado" só após reserva confirmada) | Requisito 4.4 |
-| P10 | Variáveis nunca levam quebra de linha dentro de templates da Meta | Restrição da Meta; listas (horários, orientações) só em mensagens de sessão |
+| P9 | O bot **não agenda nem remarca**: só a equipe define dia e hora; o bot nunca diz "agendado" antes disso | Regra dos serviços (sem autoagendamento / sem remarcação automática) |
+| P10 | Variáveis nunca levam quebra de linha dentro de templates da Meta | Restrição da Meta; listas (orientações, consultas) só em mensagens de sessão |
+| P11 | Prontuário nunca é exigido; o bot só pergunta de forma opcional | Prontuário é apenas um número, preenchido se o paciente tiver |
 
 Legenda da coluna "Tipo":
 - **Template** – mensagem iniciada pelo PROCAPE ou fora da janela de 24h;
@@ -44,24 +45,23 @@ Variáveis: `{{nome}}`, `{{tipo_teleconsulta}}`, `{{data}}`,
 
 | # | Chave | Serviço | Gatilho | Tipo | Botões / respostas |
 |---|---|---|---|---|---|
-| 1.1 | `pre_cat.primeiro_contato` | Pré-cateterismo | Equipe dispara (individual ou lote) | Template | Ver horários disponíveis · Falar com a equipe |
-| 2.1 | `pos_angio.convite` | Pós-angioplastia | Equipe dispara | Template | Ver horários disponíveis · Falar com a equipe |
-| H | `geral.opcoes_horario` | Todos | "Ver horários" / remarcação | Sessão (lista) | Horários · Nenhum horário serve · Falar com a equipe |
-| H0 | `geral.sem_horario_disponivel` | Todos | Sem horários cadastrados | Sessão | – (encaminha) |
-| 1.3 | `pre_cat.agendamento_confirmado` | Pré-cateterismo | Horário reservado | Sessão / Template* | – |
-| 2.2 | `pos_angio.agendamento_confirmado` | Pós-angioplastia | Horário reservado | Sessão / Template* | – |
-| 3.1 | `geral.confirmacao_teleconsulta` | Demais serviços | Horário reservado | Sessão / Template* | – |
+| 1.1 | `pre_cat.primeiro_contato` | Pré-cateterismo | Equipe dispara **sem data** (individual ou lote) | Template | Quero agendar · Falar com a equipe |
+| 2.1 | `pos_angio.convite` | Pós-angioplastia | Equipe dispara **sem data** (opcional) | Template | Quero agendar · Falar com a equipe |
+| S | `geral.solicitacao_recebida` | Todos | Bot registrou a solicitação de agendamento | Sessão | – |
+| 1.3 | `pre_cat.agendamento_confirmado` | Pré-cateterismo | Equipe salva o agendamento (ou disparo com data) | Template | Confirmo minha presença · Preciso remarcar · Cancelar |
+| 2.2 | `pos_angio.agendamento_confirmado` | Pós-angioplastia | Equipe salva o agendamento | Template | Confirmo minha presença · Preciso remarcar · Cancelar |
+| 3.1 | `geral.confirmacao_teleconsulta` | Demais serviços | Equipe salva o agendamento | Template | Confirmo minha presença · Preciso remarcar · Cancelar |
 | L1 | `geral.lembrete_sem_resposta_1` | Todos | +24h sem resposta | Template | Mesmos da mensagem original |
 | L2 | `geral.lembrete_sem_resposta_2` | Todos | +24h após L1 | Template | Mesmos da mensagem original |
-| 3.2 | `geral.lembrete_consulta` | Todos | X horas antes | Template | Confirmo minha presença · Preciso remarcar · Cancelar |
+| 3.2 | `geral.lembrete_consulta` | Todos | X horas antes | Template | Confirmo minha presença · Preciso remarcar · Cancelar (se ainda não confirmou) |
 | 3.3a | `geral.presenca_confirmada` | Todos | Paciente confirma | Sessão | – |
 | 1.7 | `geral.impossibilitado` | Todos | Paciente informa que não pode | Sessão | – (encaminha) |
-| 4.1 | `remarcacao.recebida` | Todos | Paciente pede remarcação | Sessão | – (segue para H ou 4.4) |
-| 4.3 | `remarcacao.confirmada` | Todos | Novo horário reservado | Sessão | – |
-| 4.4 | `remarcacao.encaminhada` | Todos | Sem horário / serviço não remarca sozinho | Sessão | – (encaminha) |
+| 4.1 | `remarcacao.preferencia` | Todos | Paciente pede remarcação | Sessão | Manhã · Tarde · Tanto faz |
+| 4.4 | `remarcacao.encaminhada` | Todos | Após 4.1 | Sessão | – (encaminha para a equipe) |
+| 4.3 | `remarcacao.confirmada` | Todos | Equipe define a nova data | Template | Confirmo minha presença · Preciso remarcar · Cancelar |
 | 5.1 | `cancelamento.qual_consulta` | Todos | Cancelar pelo menu com 2+ consultas | Sessão (lista) | Consultas futuras |
 | 5.1b | `cancelamento.confirmar` | Todos | Antes de cancelar | Sessão | Sim, cancelar · Não, manter |
-| 5.2 | `cancelamento.realizado` | Todos | Cancelamento registrado | Sessão | Sim, quero nova data · Não, obrigado(a) |
+| 5.2 | `cancelamento.realizado` | Todos | Cancelamento registrado | Sessão | Quero uma nova data · Não, obrigado(a) |
 | 7 | `geral.link_teleconsulta` | Todos | `{{minutos_link}}` min antes | Template | – |
 | 8.1 | `pos_angio.agradecimento_avaliacao` | Pós-angioplastia | Equipe marca "realizada" | Template | – |
 | 8.2 | `geral.agradecimento_avaliacao` | Demais serviços | Equipe marca "realizada" | Template | – |
@@ -75,8 +75,6 @@ Variáveis: `{{nome}}`, `{{tipo_teleconsulta}}`, `{{data}}`,
 | M | `geral.menu` | Todos | Paciente inicia conversa | Sessão (lista) | Menu de 6 opções |
 | A | `geral.aviso_privacidade` | Todos | Primeiro contato do número | Sessão | Concordo · Falar com a equipe |
 
-\* Sessão quando o paciente escolheu o horário pelo bot (está na janela de
-24h); Template quando a equipe agenda pela plataforma.
 
 ---
 
@@ -95,12 +93,17 @@ Você foi regulado(a) para realizar um *cateterismo* e, antes do exame, é neces
 
 ✅ Essa etapa é importante para garantir a segurança e a organização do seu procedimento.
 
-📅 Toque em *Ver horários disponíveis* para escolher o melhor dia e horário para você.
+📅 Toque em *Quero agendar* para darmos continuidade. Nossa equipe enviará a data e o horário da sua teleconsulta por aqui.
 ```
 Rodapé: `Equipe de Saúde Digital – PROCAPE`
-Botões: **Ver horários disponíveis** · **Falar com a equipe**
+Botões: **Quero agendar** · **Falar com a equipe**
+- *Quero agendar* → bot pede os exames (opcional) e dados cadastrais que
+  faltarem → mensagem **S**.
+- Usada só quando a equipe dispara **sem data**. Se o disparo já tiver data
+  e hora, o paciente recebe direto a 1.3.
+
 Ajustes aplicados: A (link pelo WhatsApp), B (botão em vez de "informe sua
-disponibilidade"), P1, P2.
+disponibilidade" em texto livre), P1, P2.
 
 ### 2.1 `pos_angio.convite` – Template
 ```
@@ -111,32 +114,26 @@ Chegou o momento de agendar sua *teleconsulta de retorno pós-angioplastia* com 
 
 🧑‍💻 A consulta é *online*: não é necessário ir ao PROCAPE. O link de acesso será enviado *por aqui, no WhatsApp*, no dia e horário agendados.
 
-📅 Toque em *Ver horários disponíveis* para escolher o melhor dia e horário para você.
+📅 Toque em *Quero agendar* e nossa equipe enviará a data e o horário por aqui.
 ```
-Rodapé + botões: iguais à 1.1.
+Rodapé + botões: iguais à 1.1. Opcional – normalmente a equipe já agenda e
+envia direto a 2.2.
 
-### H `geral.opcoes_horario` – Sessão (mensagem de lista)
+### S `geral.solicitacao_recebida` – Sessão
 ```
-📅 Estes são os horários disponíveis para sua teleconsulta de {{tipo_teleconsulta}}.
-Toque em *Ver opções* e escolha o que for melhor para você.
+Recebemos sua solicitação, {{nome}}! ✅
+🫀 Nossa equipe vai definir a data e o horário da sua teleconsulta de {{tipo_teleconsulta}} e enviará por aqui, neste WhatsApp.
 ```
-Itens da lista: até 8 horários (`qua, 19/11 – 14h00`…) + **Nenhum horário
-serve** + **Falar com a equipe**.
-- "Nenhum horário serve" → mensagem 4.4 e encaminhamento.
-- Os horários vêm de `agenda_horarios` do serviço; no pré-cateterismo, já
-  filtrados pela regra "≈7 dias antes do cateterismo".
-
-### H0 `geral.sem_horario_disponivel` – Sessão
-```
-No momento não há horários disponíveis para agendamento pelo WhatsApp. 🫀
-Sua solicitação foi registrada e nossa equipe entrará em contato por aqui para combinar a melhor data.
-```
-Abre atendimento com motivo `problema_agendamento` (status 🟣 `solicitado`).
+Antes dela, se for paciente novo, o bot coleta os dados que faltarem e
+pergunta o prontuário de forma **opcional** ("Se souber o número do seu
+prontuário no PROCAPE, informe; se não, toque em *Não sei / não tenho*").
+Registra a solicitação (🟣 `solicitado`) e a pendência "agendar" para a
+equipe.
 
 ### 1.3 `pre_cat.agendamento_confirmado`
 ```
-Pronto, {{nome}}! ✅
-🫀 Sua *teleconsulta pré-cateterismo* está agendada para:
+Olá, {{nome}}!
+🫀 Aqui é da equipe de Saúde Digital do PROCAPE. Sua *teleconsulta pré-cateterismo* está agendada para:
 
 📅 {{data}} ({{dia_semana}})
 ⏰ {{horario}}
@@ -145,15 +142,16 @@ Pronto, {{nome}}! ✅
 
 🧪 Lembre-se: tenha em mãos seus *exames de sangue dos últimos 3 meses*.
 
-Qualquer dúvida, estamos à disposição!
+Por favor, confirme sua participação tocando em uma das opções abaixo.
 ```
+Botões: **Confirmo minha presença** · **Preciso remarcar** · **Cancelar**
 Ajustes aplicados: C (data com dia da semana e horário, sem "próxima
 semana"), E ("enviaremos"), A.
 
 ### 2.2 `pos_angio.agendamento_confirmado`
 ```
-Pronto, {{nome}}! ✅
-🫀 Sua *teleconsulta de retorno pós-angioplastia* está agendada para:
+Olá, {{nome}}!
+🫀 Aqui é da equipe de Saúde Digital do PROCAPE. Sua *teleconsulta de retorno pós-angioplastia* está agendada para:
 
 📅 {{data}} ({{dia_semana}})
 ⏰ {{horario}}
@@ -162,8 +160,9 @@ Pronto, {{nome}}! ✅
 
 📋 Para participar: esteja em um local tranquilo, com boa conexão de internet, e tenha em mãos seus medicamentos em uso e exames recentes.
 
-Qualquer dúvida, estamos à disposição!
+Por favor, confirme sua participação tocando em uma das opções abaixo.
 ```
+Botões: **Confirmo minha presença** · **Preciso remarcar** · **Cancelar**
 As "orientações para participação" (item 2.2) ficam fixas no texto; se a
 equipe quiser outras, edita o modelo.
 
@@ -179,8 +178,10 @@ Sua *teleconsulta de {{tipo_teleconsulta}}* está agendada para:
 
 🧑‍💻 A consulta será *online*. Enviaremos o link *por aqui, no WhatsApp*, {{minutos_link}} minutos antes do horário.
 
-Pedimos que fique atento(a) ao WhatsApp e esteja disponível no horário agendado.
+Pedimos que fique atento(a) ao WhatsApp e esteja disponível no horário agendado. Confirme sua participação tocando em uma das opções abaixo.
 ```
+Botões: **Confirmo minha presença** · **Preciso remarcar** · **Cancelar**
+
 Usada por qualquer serviço que não tenha modelo próprio
 (`servicos.modelo_confirmacao_id` vazio).
 
@@ -193,8 +194,8 @@ Ainda não recebemos sua resposta sobre a sua *teleconsulta de {{tipo_teleconsul
 
 Por favor, toque em uma das opções abaixo.
 ```
-Botões: os da mensagem original (ex.: Ver horários disponíveis · Falar com
-a equipe; ou Confirmo · Preciso remarcar · Cancelar).
+Botões: os da mensagem original (Quero agendar · Falar com a equipe; ou
+Confirmo minha presença · Preciso remarcar · Cancelar).
 
 ### L2 `geral.lembrete_sem_resposta_2` – Template
 ```
@@ -221,7 +222,8 @@ Olá, {{nome}}!
 Para confirmar sua participação, toque em uma das opções:
 ```
 Botões: **Confirmo minha presença** · **Preciso remarcar** · **Cancelar**
-(ajuste D). Sem resposta → L1/L2 → equipe (item 2.5).
+(ajuste D) – só para quem ainda não confirmou; quem já confirmou recebe a
+versão sem botões. Sem resposta → L1/L2 → equipe (item 2.5).
 
 ### 3.3a `geral.presenca_confirmada` – Sessão
 ```
@@ -238,29 +240,37 @@ Registramos que você não poderá realizar a consulta. Nossa equipe vai avaliar
 ```
 Encaminha com motivo `impossibilitado`.
 
-### 4.1 `remarcacao.recebida` – Sessão
+### 4.1 `remarcacao.preferencia` – Sessão
 ```
 Certo, {{nome}}! 🔄
-Recebemos sua solicitação de remarcação. Vamos verificar os horários disponíveis.
+Para ajudar nossa equipe a encontrar uma nova data, qual período é melhor para você?
 ```
-Em seguida: serviço com remarcação automática e horários livres → **H**;
-caso contrário → **4.4**.
-
-### 4.3 `remarcacao.confirmada` – Sessão
-```
-Pronto! Sua consulta foi remarcada. ✅
-```
-Seguida automaticamente da confirmação do serviço (1.3, 2.2 ou 3.1) com a
-nova data. O agendamento anterior fica como `remarcado` no histórico.
+Botões: **Manhã** · **Tarde** · **Tanto faz**. A resposta vai como
+observação no atendimento. Se o paciente escrever algo em vez de tocar no
+botão, o texto também é registrado.
 
 ### 4.4 `remarcacao.encaminhada` – Sessão
 ```
 Sua solicitação de remarcação foi encaminhada para nossa equipe. 🫀
-Entraremos em contato por este WhatsApp para combinar uma nova data.
+Enviaremos a nova data e horário por este WhatsApp.
 ```
 Status 🟡 `remarcacao_solicitada` + atendimento na fila (motivo
-`remarcacao`). No pré-cateterismo é sempre este caminho (decisão da
-reunião).
+`remarcacao`). **Vale para todos os serviços** – o bot não remarca sozinho.
+
+### 4.3 `remarcacao.confirmada` – Template
+Enviada quando a equipe salva a nova data na plataforma.
+```
+Olá, {{nome}}!
+🫀 Sua teleconsulta de {{tipo_teleconsulta}} foi *remarcada* para:
+
+📅 {{data}} ({{dia_semana}})
+⏰ {{horario}}
+
+🧑‍💻 A consulta é online e o link será enviado por aqui {{minutos_link}} minutos antes.
+Por favor, confirme sua participação tocando em uma das opções abaixo.
+```
+Botões: **Confirmo minha presença** · **Preciso remarcar** · **Cancelar**.
+O agendamento anterior fica como `remarcado` no histórico.
 
 ### 5.1 `cancelamento.qual_consulta` – Sessão (lista)
 ```
@@ -281,8 +291,8 @@ Botões: **Sim, cancelar** · **Não, manter**
 Sua consulta de {{data}} foi cancelada. ❌
 🫀 Deseja solicitar uma nova data?
 ```
-Botões: **Sim, quero nova data** (→ H ou equipe) · **Não, obrigado(a)**
-(→ encerra; status 🔴).
+Botões: **Quero uma nova data** (→ registra solicitação para a equipe e
+envia **S**) · **Não, obrigado(a)** (→ encerra; status 🔴).
 
 ### 7 `geral.link_teleconsulta` – Template
 ```
@@ -351,7 +361,7 @@ Olá, {{nome}}!
 
 Para não atrasar seu atendimento, toque em uma das opções abaixo.
 ```
-Botões: **Quero remarcar** (→ 4.1) · **Falar com a equipe**.
+Botões: **Quero remarcar** (→ 4.1 → equipe) · **Falar com a equipe**.
 Sem resposta → L1/L2 → equipe. Sugestão para o caso "paciente faltou", que
 estava em aberto.
 
@@ -420,12 +430,13 @@ jurídico/DPO do hospital.
 | | Ajuste | Onde | Situação |
 |---|---|---|---|
 | A | Link sempre pelo WhatsApp | 1.1, 2.1, 1.3, 2.2, 3.1, 3.2, 7 | Aplicado – validar |
-| B | "Informe sua disponibilidade" → botão **Ver horários disponíveis** | 1.1, 2.1 | Aplicado – validar |
+| B | "Informe sua disponibilidade" (texto livre) → botão **Quero agendar**; a equipe define a data | 1.1, 2.1 | Aplicado – validar |
 | C | Data com dia da semana e **horário**, sem "próxima semana" | 1.3, 2.2, 3.1, 3.2 | Aplicado – validar |
 | D | Confirmação de presença com 3 botões (inclui Cancelar) | 3.2 | Aplicado – validar |
 | E | "o enviaremos" → "enviaremos" | 1.3, 2.2 | Aplicado |
 | F | Menu com 6 opções em mensagem de lista | M, 12 | Aplicado |
-| G | Textos que faltavam escritos | L1, L2, 1.7, 2.1, 4.x, 5.x, 8.2, 8.3b, A | Sugestão – validar |
+| G | Textos que faltavam escritos | L1, L2, 1.7, 2.1, S, 4.x, 5.x, 8.2, 8.3b, A | Sugestão – validar |
+| J | Confirmação (1.3, 2.2, 3.1) já pede presença com 3 botões, pois a data vem da equipe | 1.3, 2.2, 3.1, 4.3 | Aplicado – validar |
 | H | Nova mensagem para paciente que faltou | 8.4 | Sugestão – validar |
 | I | Padrões P1–P10 (primeiro nome, apresentação e assinatura únicas) | Todas | Aplicado – validar |
 
@@ -438,13 +449,15 @@ jurídico/DPO do hospital.
 | Não resposta | 2 lembretes a cada 24h, depois equipe | Admin › Prazos |
 | Avaliação | Imediata ao marcar "realizada" | Admin › Prazos |
 | Paciente faltou | Mensagem 8.4 + regra de não resposta | Admin › Mensagens |
-| Remarcação | Pré-cateterismo → equipe; demais serviços → bot oferece horários se houver | Admin › Serviços |
+| Agendamento | **Sempre a equipe** define dia e hora (sem autoagendamento) | – |
+| Remarcação | **Sempre a equipe** (sem remarcação automática); bot só registra a preferência de período | – |
+| Prontuário | Número opcional; o bot pergunta sem exigir | – |
 | Plataforma de vídeo / link | Link cadastrado no agendamento (ou padrão da agenda); funciona com link fixo ou por consulta | Agendamento / Agenda |
 
 ## 6. Para enviar à Meta (ordem de prioridade)
 
-Templates necessários para o MVP: 1.1, 2.1, 1.3/2.2/3.1 (versão template),
-L1, L2, 3.2, 7, 8.1, 8.2, 8.3, 8.4. Mensagens de sessão não precisam de
+Templates necessários para o MVP: 1.1, 2.1, 1.3, 2.2, 3.1, 4.3, L1, L2,
+3.2, 7, 8.1, 8.2, 8.3, 8.4. Mensagens de sessão não precisam de
 aprovação. Nos templates, as variáveis são cadastradas na Meta como
 parâmetros; o sistema faz o mapeamento a partir da chave.
 
@@ -455,36 +468,39 @@ parâmetros; o sistema faz o mapeamento a partir da chave.
 ### Pré-cateterismo
 ```mermaid
 flowchart TD
-    A[1.1 Primeiro contato] -->|Ver horários| H[H Opções de horário]
+    D{Disparo da equipe}
+    D -->|com data| C[1.3 Confirmação + presença]
+    D -->|sem data| A[1.1 Primeiro contato]
+    A -->|Quero agendar| S[Coleta exames/dados → S 🟣]
     A -->|sem resposta| L[L1 → L2 → equipe 🔵]
-    L -->|responde| H
-    H -->|escolhe| C[1.3 Confirmação]
-    H -->|nenhum serve| E[4.4 → equipe 🟡]
-    C --> LC[3.2 Lembrete + presença]
-    LC -->|Confirmo| OK[3.3a Presença confirmada 🟢]
-    LC -->|Preciso remarcar| E
-    LC -->|Cancelar| X[5.1b → 5.2 🔴]
+    L -->|responde| S
+    S --> EQ[Equipe define dia e hora]
+    EQ --> C
+    C -->|Confirmo| OK[3.3a Presença confirmada 🟢]
+    C -->|Preciso remarcar| R[4.1 → 4.4 equipe 🟡]
+    C -->|Cancelar| X[5.1b → 5.2 🔴]
+    C -->|sem resposta| L2[3.2 Lembrete → L1 → L2 → equipe]
+    R --> EQ2[Equipe define nova data]
+    EQ2 --> RC[4.3 Remarcada + presença]
     OK --> LK[7 Link]
-    LK --> R{Equipe marca}
-    R -->|realizada| P[8.3 Pendência, se houver]
-    R -->|faltou| F[8.4 Faltou]
+    LK --> F{Equipe marca}
+    F -->|realizada| P[8.3 Pendência, se houver]
+    F -->|faltou| FT[8.4 Faltou]
 ```
 
 ### Pós-angioplastia
 ```mermaid
 flowchart TD
-    A[2.1 Convite] -->|Ver horários| H[H Opções de horário]
-    A -->|sem resposta| L[L1 → L2 → equipe 🔵]
-    H --> C[2.2 Confirmação]
-    C --> LC[3.2 Lembrete + presença]
-    LC -->|Confirmo| OK[3.3a 🟢]
-    LC -->|Preciso remarcar| RM[4.1 → H ou 4.4]
-    LC -->|Cancelar| X[5.1b → 5.2 🔴]
-    LC -->|sem resposta| L2[L1 → L2 → equipe]
+    EQ[Equipe agenda] --> C[2.2 Confirmação + presença]
+    C -->|Confirmo| OK[3.3a 🟢]
+    C -->|Preciso remarcar| R[4.1 → 4.4 equipe 🟡]
+    C -->|Cancelar| X[5.1b → 5.2 🔴]
+    C -->|sem resposta| L[3.2 Lembrete → L1 → L2 → equipe]
+    R --> RC[Equipe define nova data → 4.3]
     OK --> LK[7 Link]
-    LK --> R{Equipe marca}
-    R -->|realizada| AV[8.1 Agradecimento + formulário]
-    R -->|faltou| F[8.4 Faltou]
+    LK --> F{Equipe marca}
+    F -->|realizada| AV[8.1 Agradecimento + formulário]
+    F -->|faltou| FT[8.4 Faltou]
 ```
 
 ---

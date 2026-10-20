@@ -81,8 +81,7 @@ procape-saude-digital/
 │   │       │   ├── equipes/
 │   │       │   ├── servicos/
 │   │       │   ├── pacientes/        # cadastro, telefones, busca, importação de planilha, linha do tempo
-│   │       │   ├── prontuario/       # dados de abertura, status do prontuário
-│   │       │   ├── agendas/          # disponibilidade (agenda_horarios), reserva com lock
+│   │       │   ├── agenda/           # calendário e sugestão de data (regra do pré-cateterismo)
 │   │       │   ├── agendamentos/     # CRUD, transições de status, eventos
 │   │       │   ├── campanhas/        # disparo em lote
 │   │       │   ├── conversas/        # conversas, mensagens, anexos, chat da equipe
@@ -111,10 +110,9 @@ procape-saude-digital/
 │   │       │   │   ├── identificacao.ts      # CPF/Cartão SUS + data de nascimento, troca de telefone
 │   │       │   │   ├── servico.ts            # qual serviço
 │   │       │   │   ├── menu.ts               # 6 opções (lista)
-│   │       │   │   ├── agendamento.ts        # coleta, prontuário, horários, reserva
-│   │       │   │   ├── prontuario.ts         # coleta de dados para abertura
+│   │       │   │   ├── solicitacao.ts        # coleta dados, prontuário opcional, registra pedido p/ equipe
 │   │       │   │   ├── confirmacao.ts        # resposta 1/2/3 da mensagem de agendamento
-│   │       │   │   ├── remarcacao.ts
+│   │       │   │   ├── remarcacao.ts         # pergunta preferência de período e encaminha à equipe
 │   │       │   │   ├── cancelamento.ts
 │   │       │   │   ├── primeiro-contato.ts   # pré-cateterismo (exames + dados)
 │   │       │   │   ├── confirmacao-presenca.ts # Confirmo / Preciso remarcar / Cancelar
@@ -141,7 +139,7 @@ procape-saude-digital/
 │               ├── PacienteDetalhe/  # dados, agendamentos, linha do tempo, pendências, conversa
 │               ├── Fila/             # atendimentos humanos por equipe
 │               ├── Chat/             # conversa em atendimento
-│               ├── Agenda/           # calendário + disponibilidade
+│               ├── Agenda/           # calendário + lista "aguardando agendamento"
 │               ├── Campanhas/        # importação e disparo em lote
 │               ├── Pendencias/
 │               └── Admin/            # área administrativa – protegida por permissão
@@ -188,8 +186,9 @@ type Resultado = {
 type Etapa = (entrada: Entrada, ctx: Contexto) => Promise<Resultado>;
 ```
 
-Efeitos são aplicados pelo motor numa **transação** (ex.: reservar horário +
-criar agendamento + registrar evento + agendar lembrete).
+Efeitos são aplicados pelo motor numa **transação** (ex.: registrar
+solicitação + criar pendência "agendar" + abrir atendimento + notificar a
+equipe).
 
 ### 4.2 Processamento de uma mensagem recebida
 
@@ -279,9 +278,8 @@ Remarcar ou cancelar **cancela e recria** esses jobs.
 | Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 8.3); `faltou` → envia 8.4 |
 | Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `POST /pacientes/importar` (planilha) |
 | Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/validar` |
-| Prontuário | `PUT /pacientes/:id/dados-prontuario`, `POST /pacientes/:id/prontuario` (registrar nº → retoma fluxo) |
 | Agendamentos | `GET /agendamentos?de=&ate=&status=`, `POST /pacientes/:id/agendamentos` (envia confirmação), `PATCH /agendamentos/:id`, `POST /agendamentos/:id/remarcar`, `POST /agendamentos/:id/cancelar` |
-| Agendas | `GET /agendas/:id/horarios?de=&ate=`, `POST /agendas/:id/horarios/gerar` (lote), `PATCH /horarios/:id` |
+| Agenda | `GET /agenda?de=&ate=&servico=` (calendário), `GET /agenda/sugestao?servico=&dataProcedimento=` (data sugerida + horários já ocupados), `GET /agendamentos?status=solicitado,remarcacao_solicitada` (aguardando agendamento) |
 | Campanhas | `POST /campanhas`, `POST /campanhas/:id/enviar`, `GET /campanhas/:id` |
 | Fila | `GET /atendimentos?equipe=&status=`, `POST /atendimentos/:id/assumir`, `POST /atendimentos/:id/resolver` |
 | Conversas | `GET /conversas/:id/mensagens`, `POST /conversas/:id/mensagens` (equipe envia), `POST /conversas/:id/encerrar`, `POST /conversas/:id/devolver-ao-bot` |
@@ -311,7 +309,7 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
   da seção 4 de `REQUISITOS.md` vira um teste.
 - **Simulador de conversa** com o `fake.provider` para a Anna testar os
   fluxos sem WhatsApp real.
-- **Integração** da API com banco de teste (reserva concorrente de horário,
+- **Integração** da API com banco de teste (conflito de horário ao agendar,
   transições de status, jobs de não resposta).
 
 ---
@@ -325,8 +323,8 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 | 2. Cadastro e agenda | 3–5 | Pacientes, serviços, agendamentos, lista com cores/filtros, importação |
 | 3. WhatsApp + bot MVP | 5–8 | Webhook, provedor, modelos de mensagem, primeiro contato, confirmação, confirmação de presença, encaminhamento (com fora do horário), fila, chat, notificações |
 | 4. Jobs | 8–10 | Não resposta (2 lembretes), lembrete da consulta, envio do link, agradecimento/avaliação, travas de tempo, disparo em lote |
-| 5. Testes com a equipe | 11–20 | Testes da Anna, ajustes; em paralelo: identificação completa, menu, orientações, pendência do paciente, prontuário, linha do tempo, demais telas admin |
-| Depois | – | Disponibilidade/autoagendamento, remarcação automática, IA na triagem |
+| 5. Testes com a equipe | 11–20 | Testes da Anna, ajustes; em paralelo: identificação completa, menu, orientações, solicitação de agendamento pelo bot, pendência do paciente, linha do tempo, demais telas admin |
+| Depois | – | IA na triagem, relatórios avançados, integração com o sistema do hospital |
 
 **Dependência crítica**: aprovação dos templates pela Meta e verificação da
 conta Business podem levar dias – precisam começar antes do desenvolvimento.

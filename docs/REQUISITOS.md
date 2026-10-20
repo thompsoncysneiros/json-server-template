@@ -44,8 +44,15 @@ precisar ler toda a conversa.
 | **Outros** | Contato espontâneo | – | Saúde Digital (triagem) |
 
 - A lista de serviços deve ser **cadastrável** na plataforma (não fixa no
-  código), cada um com sua equipe responsável e suas regras (permite
-  autoagendamento? remarcação automática? exige prontuário?).
+  código), cada um com sua equipe responsável, modelos de mensagem,
+  orientações e formulário de avaliação.
+- **Regras definidas para todos os serviços:**
+  - **Sem autoagendamento**: o bot não oferece horários; **a equipe define dia
+    e hora** na plataforma e o paciente confirma, pede remarcação ou cancela.
+  - **Sem remarcação automática**: todo pedido de remarcação vai para a
+    equipe.
+  - **Prontuário não é obrigatório**: é apenas um campo numérico, preenchido
+    quando o paciente tiver; nenhum fluxo depende dele.
 - Um paciente pode estar em mais de um serviço ao longo do tempo.
 - Um procedimento por vez por paciente.
 - O número do WhatsApp **não é divulgado**; o primeiro contato costuma ser do
@@ -60,7 +67,7 @@ precisar ler toda a conversa.
 - Ordenação padrão: **não atendidos primeiro**, depois **mais antigos**.
 - Filtros: nome, prontuário, CPF/Cartão SUS, serviço, status, "não
   atendidos", "solicitou cancelamento", "solicitou remarcação",
-  "sem resposta", "pendente de prontuário".
+  "sem resposta", "aguardando agendamento".
 - Indicador de status do agendamento mais recente:
 
 | Cor | Significado |
@@ -69,12 +76,13 @@ precisar ler toda a conversa.
 | 🟡 Amarelo | Pediu remarcação |
 | 🔴 Vermelho | Cancelou |
 | 🔵 Azul | Não respondeu / aguardando confirmação após lembrete |
-| 🟣 Roxo | Pendente da equipe (ex.: abertura de prontuário) |
+| 🟣 Roxo | Aguardando a equipe definir data/hora (solicitação de agendamento ou remarcação em andamento) |
 | ⚪ Cinza | Mensagem enviada, aguardando resposta |
 
 ### 3.2 Ficha do paciente com **resumo do atendimento**
 Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
-- Dados de identificação, telefones (WhatsApp), prontuário e serviços.
+- Dados de identificação, telefones (WhatsApp), prontuário (se houver) e
+  serviços.
 - **Linha do tempo**: contatos, agendamentos, confirmações, remarcações,
   cancelamentos, encaminhamentos e pendências, com data/hora e quem fez
   (bot, paciente ou membro da equipe).
@@ -90,13 +98,17 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 - Remarcação gera um **novo agendamento ligado ao anterior** (histórico
   preservado).
 
-### 3.4 Agenda e disponibilidade
+### 3.4 Agenda
 - **Visão de calendário** dos agendamentos por serviço.
-- **Cadastro de disponibilidade** (horários livres por serviço/agenda),
-  necessário para o autoagendamento e a remarcação automática pelo bot.
-- Regra usada hoje no pré-cateterismo: teleconsulta ≈ 7 dias antes do
-  cateterismo (cateterismo dia 26 → teleconsulta dia 19, horários 14h, 14h30,
-  15h, 15h30). O sistema pode sugerir os horários a partir dessa regra.
+- **Não há cadastro de disponibilidade**: a equipe escolhe dia e hora ao
+  criar o agendamento.
+- Ajuda ao agendar: regra usada hoje no pré-cateterismo – teleconsulta ≈ 7
+  dias antes do cateterismo (cateterismo dia 26 → teleconsulta dia 19,
+  horários 14h, 14h30, 15h, 15h30). Ao informar a data do cateterismo, a
+  plataforma **sugere** a data da teleconsulta e mostra os horários já
+  ocupados naquele dia, para a equipe escolher.
+- **Lista "Aguardando agendamento"**: pacientes que pediram agendamento ou
+  remarcação e ainda não têm data (🟣/🟡).
 
 ### 3.5 Disparo em lote
 - Importar/cadastrar a lista da semana (substitui a planilha manual).
@@ -109,7 +121,7 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 - Cada item mostra: paciente, serviço, **motivo**, **queixa**, prioridade,
   origem (paciente pediu / bot encaminhou) e há quanto tempo está aberto.
 - Notificação em tempo real para a equipe responsável.
-- Filas separadas por equipe (ex.: Pesquisa FA, abertura de prontuário).
+- Filas separadas por equipe (ex.: Saúde Digital, Pesquisa FA).
 
 ### 3.7 Chat dentro do sistema
 - A equipe conversa com o paciente **pela plataforma**, não pelo celular.
@@ -124,13 +136,12 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 | Usuários | Criar, desativar, redefinir senha, atribuir nível e equipes | Admin, Supervisão (até o próprio nível, exclusivo) |
 | Perfis e permissões | Ajustar o que cada nível pode fazer | Admin |
 | Equipes | Equipes e membros | Admin, Supervisão |
-| Serviços | Linhas de cuidado e suas regras (autoagendamento, remarcação automática, exige prontuário) | Admin, Supervisão |
+| Serviços | Linhas de cuidado, equipe responsável, modelos de mensagem, prazos e formulário | Admin, Supervisão |
 | Modelos de mensagem | Editar textos do bot, ver status de aprovação na Meta | Admin, Supervisão |
 | Orientações | Respostas cadastradas que o bot pode dar (item 4.15) | Admin, Supervisão |
 | Formulários de avaliação | Link do formulário por serviço/tipo de consulta | Admin, Supervisão |
 | Horário de atendimento e feriados | Base da mensagem "fora do horário" | Admin, Supervisão |
 | Regras e prazos | Lembretes, travas de tempo, momento de envio do link | Admin, Supervisão |
-| Agendas / disponibilidade | Horários livres por serviço | Supervisão, Atendente (se liberado) |
 | Auditoria | Quem viu/alterou o quê | Admin, Supervisão |
 | Relatórios | Indicadores (confirmação, não resposta, tempo de fila) | Admin, Supervisão |
 | Integrações (WhatsApp, backups) | Credenciais e configurações técnicas | **Somente Admin** |
@@ -145,7 +156,7 @@ pode fazer e a equipe define *quais filas/pacientes* vê.
 | **1. Administrador** | TI / Thompson | Tudo, inclusive integrações e permissões. Poucos usuários |
 | **2. Supervisão** | Coordenação da Saúde Digital (ex.: Mari) | Tudo da operação + área administrativa (exceto integrações), relatórios, auditoria, exportação |
 | **3. Atendente / Enfermagem** | Equipe da Saúde Digital (ex.: Anna) | Operação do dia a dia em todas as filas das suas equipes |
-| **4. Equipe específica** | Pesquisa FA, abertura de prontuário, aconselhamento genético | Só a própria fila, pendências e pacientes vinculados ao seu serviço |
+| **4. Equipe específica** | Pesquisa FA, aconselhamento genético | Só a própria fila, pendências e pacientes vinculados ao seu serviço |
 
 Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leitura · ❌ sem acesso):
 
@@ -159,10 +170,9 @@ Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leit
 | Marcar consulta como realizada | ✅ | ✅ | ✅ | 🔸 |
 | Fila de atendimento e chat | ✅ | ✅ | 🔸 | 🔸 |
 | Transferir atendimento entre equipes | ✅ | ✅ | ✅ | ❌ |
-| Registrar nº de prontuário | ✅ | ✅ | ✅ | 🔸 (prontuário) |
+| Registrar nº de prontuário | ✅ | ✅ | ✅ | 🔸 |
 | Validar troca de telefone | ✅ | ✅ | ✅ | ❌ |
 | Agenda (calendário) | ✅ | ✅ | ✅ | 🔸 |
-| Disponibilidade de horários | ✅ | ✅ | **[PENDENTE]** | ❌ |
 | Relatórios | ✅ | ✅ | 👁 básico | ❌ |
 | Exportar dados | ✅ | ✅ | ❌ | ❌ |
 | Modelos de mensagem, orientações, formulários | ✅ | ✅ | ❌ | ❌ |
@@ -197,7 +207,7 @@ Regras:
      nascimento**.
      - Encontrado com outro telefone → perguntar se deseja atualizar o número;
        a troca fica **pendente de validação da equipe** (foto de documento).
-     - Não encontrado → seguir como paciente novo (coleta na seção 4.4).
+     - Não encontrado → seguir como paciente novo (coleta na seção 4.3).
 3. **Identificar o serviço** (seção 2): Pré-cateterismo, Pós-angioplastia,
    Fibrilação atrial, Aconselhamento genético, Outros.
 4. **Apresentar o menu**:
@@ -214,13 +224,16 @@ Como podemos ajudar?
 
 - "Orientações" entrou com a especificação das mensagens (item 4.15).
 - **Falar com a equipe** fica disponível em todas as etapas.
+- Opção 1 registra uma **solicitação de agendamento** para a equipe (o bot
+  não marca horário – seção 4.3).
 - Opções 2, 3 e 4 só fazem sentido se o paciente tiver agendamento futuro;
-  se não tiver, o bot informa e oferece o agendamento ou a equipe.
+  se não tiver, o bot informa e oferece a solicitação de agendamento ou a
+  equipe.
 - Fibrilação atrial: por regra da reunião, os contatos vão para a fila da
   **equipe da pesquisa** (pedir a queixa e encaminhar).
 
 > Limitação do WhatsApp: mensagens com **botões** aceitam no máximo 3 opções.
-> Para o menu de 5 opções usar **mensagem de lista** (até 10 itens) ou texto
+> Para o menu de 6 opções usar **mensagem de lista** (até 10 itens) ou texto
 > numerado. A confirmação (1/2/3) cabe em botões.
 
 ### 4.2 Paciente que já recebeu mensagem do PROCAPE
@@ -229,7 +242,9 @@ lembrete, primeiro contato da regulação), o bot **já sabe quem é e de qual
 agendamento se trata** – não pede identificação completa nem pergunta qual
 consulta, apenas valida (data de nascimento) quando houver ação sensível.
 
-### 4.3 Agendamento (opção 1)
+### 4.3 Solicitação de agendamento (opção 1)
+O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe
+define dia e hora na plataforma.
 1. Identificar o tipo de teleconsulta / serviço.
 2. Nome completo.
 3. CPF ou outro identificador definido pela equipe (**[PENDENTE]**: aceitar
@@ -237,53 +252,46 @@ consulta, apenas valida (data de nascimento) quando houver ação sensível.
 4. Data de nascimento.
 5. Telefone: **confirmar** o número do WhatsApp em uso ("este é o melhor
    número para contato?") em vez de pedir de novo.
-6. Verificar cadastro existente (CPF/Cartão SUS + data de nascimento).
-7. Verificar prontuário (seção 4.4).
-8. Verificar disponibilidade na agenda do serviço.
-9. Apresentar as opções disponíveis (até 3 por vez + "ver outros"/"nenhum
-   serve" → equipe).
-10. Registrar o agendamento (reserva o horário).
-11. Enviar a confirmação (seção 4.6).
+6. Verificar cadastro existente (CPF/Cartão SUS + data de nascimento); se
+   não existir, criar o pré-cadastro.
+7. Perguntar, de forma **opcional**, o número do prontuário ("Se você já é
+   paciente do PROCAPE e sabe o número do seu prontuário, informe; se não,
+   toque em *Não sei / não tenho*").
+8. Registrar a **solicitação de agendamento** (status 🟣 `solicitado`) e criar
+   a pendência "agendar" para a equipe do serviço.
+9. Informar ao paciente que a solicitação foi recebida e que **a equipe
+   enviará a data e o horário por este WhatsApp** – o bot **nunca informa
+   que o agendamento foi realizado** antes de a equipe definir a data.
+10. Quando a equipe salvar o agendamento, o bot envia a confirmação
+    (seção 4.6).
 
-Regras:
-- Se o serviço **não permitir autoagendamento** ou não houver
-  disponibilidade cadastrada, o bot registra o pedido como **solicitação de
-  agendamento** e encaminha para a equipe, informando o paciente de que a
-  equipe entrará em contato.
-- Decisão da reunião para o pré-cateterismo: **a equipe define dia e hora** e
-  o paciente apenas confirma ou pede remarcação. O autoagendamento é um
-  "plus" a ser ligado por serviço.
-
-### 4.4 Paciente sem prontuário
-- Verificação do prontuário: a plataforma registra se o paciente **possui**,
-  **não possui**, **está em abertura** ou **ainda não foi verificado**
-  (**[PENDENTE]** existe integração com o sistema do hospital? Se não, a
-  verificação é manual pela equipe).
-- **Possui** → continuar o fluxo.
-- **Não possui**:
-  1. Coletar os dados para abertura (**[PENDENTE]** lista exata: nome da
-     mãe, endereço, CEP, município etc.) e, se for o caso, exames/documentos
-     (anexos).
-  2. Registrar uma **pendência para a equipe de abertura de prontuário**.
-  3. Informar ao paciente que os dados foram recebidos e que **a equipe dará
-     continuidade** – o bot **não informa que o agendamento foi realizado**
-     enquanto houver etapa dependente da equipe.
-  4. Quando a equipe registrar o prontuário na plataforma, o fluxo retoma
-     (bot oferece horários ou a equipe agenda) e o paciente é avisado.
+### 4.4 Prontuário
+- O prontuário é **apenas um número, não obrigatório**: preenchido quando o
+  paciente tiver (informado por ele, pela equipe ou já existente na base).
+- Nenhum fluxo é bloqueado pela falta do prontuário; não há verificação nem
+  etapa de abertura de prontuário no sistema.
+- O campo aparece na ficha e pode ser usado como filtro/busca.
 
 ### 4.5 Pré-cateterismo (regulação/mutirão) – primeiro contato ativo
 Textos em `MENSAGENS.md`.
-1. Disparo da mensagem padrão (1.1) – informa que a teleconsulta é online,
-   que o link chega pelo WhatsApp e que exige exames de sangue dos últimos
-   3 meses; botão **Ver horários disponíveis**.
-2. Paciente toca no botão → bot apresenta os **horários disponíveis** (H).
-   - "Nenhum serve" → equipe.
-3. Bot solicita **exames** (anexos, opcional) e coleta os **dados para
-   abertura do prontuário** (seção 4.4), quando necessário.
-4. Horário reservado → confirmação (1.3) com data, horário, aviso de que é
-   online, que não precisa ir ao PROCAPE e de que o link será enviado.
+Duas formas de uso, à escolha da equipe no disparo:
+- **A) Disparo já com data e hora** (mais comum, decisão da reunião): a equipe
+  define a data no lote e o paciente recebe direto a confirmação (1.3) com
+  *Confirmo minha presença* · *Preciso remarcar* · *Cancelar*.
+- **B) Disparo sem data** (quando a equipe precisa primeiro do retorno do
+  paciente):
+  1. Mensagem padrão (1.1) – teleconsulta online, link pelo WhatsApp, exames
+     de sangue dos últimos 3 meses; botões **Quero agendar** · **Falar com a
+     equipe**.
+  2. Paciente toca em *Quero agendar* → bot pede os **exames** (anexos,
+     opcional) e os **dados cadastrais** que faltarem (**[PENDENTE]** lista)
+     → registra a solicitação (🟣) e informa que a equipe enviará data e
+     horário.
+  3. Equipe define dia e hora na plataforma → confirmação (1.3).
+
+Nos dois casos:
 5. Sem resposta → lembrete 1 → lembrete 2 → equipe (4.9).
-6. Paciente quer remarcar → 4.7.
+6. Paciente quer remarcar → 4.7 (sempre equipe).
 7. Paciente **não pode realizar a consulta** → registra a situação
    (motivo `impossibilitado`) e encaminha para a equipe.
 8. Paciente pergunta sobre o cateterismo → apenas **orientações cadastradas**
@@ -292,9 +300,11 @@ Textos em `MENSAGENS.md`.
 
 ### 4.5.1 Pós-angioplastia
 Textos em `MENSAGENS.md`.
-1. Convite para agendamento da consulta de acompanhamento (2.1).
-2. Horários disponíveis (H) ou agendamento pela equipe → confirmação (2.2) com
-   data, horário, aviso de online e orientações de participação.
+1. Equipe agenda a consulta de acompanhamento e o bot envia a confirmação
+   (2.2) com data, horário, aviso de online e orientações de participação,
+   com *Confirmo minha presença* · *Preciso remarcar* · *Cancelar*.
+   - Opcional: convite sem data (2.1) com *Quero agendar*, igual à forma B
+     do pré-cateterismo.
 3. Lembrete perto da data (3.2) com **confirmação de presença**:
    *Confirmo minha presença* · *Preciso remarcar* · *Cancelar*.
 4. Não confirma → lembretes L1/L2 e depois equipe (4.9).
@@ -313,9 +323,10 @@ contendo:
 - Orientações (por serviço/tipo, cadastradas em modelos de mensagem).
 - O **link não vai na confirmação**: é enviado em mensagem própria no
   momento definido (4.13).
+- Botões: **Confirmo minha presença · Preciso remarcar · Cancelar**.
 
-Confirmação de presença: enviada junto do **lembrete** perto da consulta
-(3.2). Botões: **Confirmo minha presença · Preciso remarcar · Cancelar**.
+O **lembrete** perto da consulta (3.2) repete os botões para quem ainda não
+confirmou; para quem já confirmou, é só um lembrete.
 - Confirmar → 🟢 e aparece na agenda.
 - Remarcar → seção 4.7 (🟡).
 - Cancelar → seção 4.8 (🔴).
@@ -323,24 +334,24 @@ Confirmação de presença: enviada junto do **lembrete** perto da consulta
 ### 4.7 Remarcação
 1. Identificar a consulta atual (automático se veio da mensagem do
    agendamento; se veio do menu e houver mais de uma futura, perguntar qual).
-2. Informar que a solicitação será processada.
-3. **Se o serviço permitir remarcação automática e houver disponibilidade**:
-   apresentar opções → registrar a nova data → atualizar o agendamento (novo
-   registro ligado ao anterior) → enviar nova confirmação.
-4. **Caso contrário** (ou se nenhuma opção servir): encaminhar para a equipe.
+2. Perguntar, opcionalmente, a preferência do paciente (texto livre, ex.:
+   "prefiro à tarde") – vai como observação para a equipe.
+3. Registrar status 🟡 `remarcacao_solicitada`, abrir atendimento na fila
+   (motivo `remarcacao`) e informar que a equipe enviará a nova data.
+4. A equipe define a nova data na plataforma → novo agendamento ligado ao
+   anterior → o bot envia nova confirmação.
 
-> Decisão da reunião: no pré-cateterismo, a remarcação vai **direto para a
-> equipe** (evita o paciente testar várias datas). A remarcação automática
-> fica configurável por serviço. Sugestão: limitar a 1 remarcação automática
-> por agendamento; a partir da segunda, equipe.
+> **Sem remarcação automática** em nenhum serviço: evita o paciente testar
+> várias datas e mantém a agenda sob controle da equipe.
 
 ### 4.8 Cancelamento
 1. Confirmar qual consulta (automático se veio da mensagem; senão perguntar).
 2. Pedir confirmação ("Tem certeza que deseja cancelar…?") e, opcionalmente,
    o motivo.
-3. Registrar o cancelamento, atualizar o status (🔴) e liberar o horário.
+3. Registrar o cancelamento e atualizar o status (🔴).
 4. Informar o paciente.
-5. Oferecer: "Deseja solicitar um novo agendamento?" → seção 4.3 ou equipe.
+5. Oferecer: "Deseja solicitar uma nova data?" → registra solicitação de
+   agendamento para a equipe (4.3).
 
 ### 4.9 Paciente não responde
 Fluxo: primeiro contato → aguarda → **lembrete 1** → aguarda →
@@ -497,10 +508,10 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
    modelos de mensagem.
 2. **Atendimento completo**: início de conversa com identificação, menu de 6
    opções, orientações cadastradas, contato espontâneo, travas de tempo,
-   coleta de dados de prontuário, pendências (da equipe e do paciente), ficha
-   com linha do tempo, auditoria, demais telas administrativas.
-3. **Agenda**: disponibilidade, calendário, autoagendamento e remarcação
-   automática por serviço.
+   solicitação de agendamento pelo bot, pendências (da equipe e do paciente),
+   ficha com linha do tempo, auditoria, demais telas administrativas.
+3. **Agenda**: calendário, sugestão de data pela regra do pré-cateterismo e
+   lista "aguardando agendamento".
 4. **Futuro**: triagem da queixa por IA, relatórios/indicadores, integração
    com o sistema do hospital.
 
@@ -510,14 +521,15 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 
 | Tema | Reunião | Especificação nova | Proposta |
 |---|---|---|---|
-| Remarcação | Vai direto para a equipe | Bot remarca se houver agenda | **Adotado:** configurável por serviço; pré-cateterismo = equipe |
+| Remarcação | Vai direto para a equipe | Bot remarca se houver agenda | **Definido:** sempre a equipe (sem remarcação automática) |
 | Cancelamento | Opções na própria mensagem, sem perguntar qual consulta | Confirmar qual consulta | Automático quando vier da mensagem; perguntar só se vier do menu com 2+ consultas |
-| Agendamento | Equipe define dia e hora | Bot verifica agenda e oferece opções | Ambos; autoagendamento ligado por serviço (fase 3) |
+| Agendamento | Equipe define dia e hora | Bot verifica agenda e oferece opções | **Definido:** equipe define dia e hora (sem autoagendamento) |
 | Telefone | Já é o número do WhatsApp | Solicitar telefone | Confirmar o número em uso |
 | Não resposta | Marcar azul no 3º dia | Aguardando confirmação + regra da Saúde Digital | Azul + regra configurável (**[PENDENTE]**) |
 | Serviços | 3 linhas | + Aconselhamento genético e Outros | Serviços cadastráveis |
+| Prontuário | Pacientes da regulação não têm | Verificar/abrir prontuário antes de agendar | **Definido:** só um número opcional, sem bloqueio |
 | Envio do link | – | Msg 1.1: e-mail/SMS · Msgs 1.3, 2.2, 3.1, 7: WhatsApp | **Adotado:** WhatsApp (mensagem 7) |
-| Disponibilidade (pré-cat.) | Equipe define dia/hora | Msg 1.1 pede "sua disponibilidade" (texto livre) | **Adotado:** botão "Ver horários disponíveis" + lista |
+| Disponibilidade (pré-cat.) | Equipe define dia/hora | Msg 1.1 pede "sua disponibilidade" (texto livre) | **Definido:** sem texto livre; data já no disparo ou botão "Quero agendar" → equipe define |
 | Confirmação de presença | 1/2/3 (confirmar/remarcar/cancelar) | 1 Confirmo / 2 Preciso remarcar | **Adotado:** 3 botões, incluindo Cancelar |
 | Não resposta | 1 lembrete | 2 lembretes e depois equipe | **Adotado:** 2 lembretes (configurável) |
 | Menu | 5 opções | 6 opções (+ Orientações) | **Adotado:** 6 opções (lista) |
@@ -536,5 +548,5 @@ Confirmar se ainda falta algo. Na especificação de mensagens, a seção 8
 - **Thompson**: tentar novamente o cadastro da VPS; planejamento técnico.
 - **Anna**: acompanhar a Mari sobre a VPS (ou via TI); revisar os
   **[PENDENTE]** deste documento; enviar os textos padrão das mensagens e a
-  lista de dados para abertura de prontuário.
+  lista de dados cadastrais que o bot deve coletar dos pacientes novos.
 - Verificar se ainda há acesso ao site feito anteriormente pela Flávia.
