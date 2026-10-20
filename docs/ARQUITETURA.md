@@ -145,7 +145,7 @@ procape-saude-digital/
 │           └── pages/
 │               ├── Login/
 │               ├── Pacientes/        # lista com cores/filtros
-│               ├── PacienteDetalhe/  # dados, agendamentos, linha do tempo, pendências, conversa
+│               ├── PacienteDetalhe/  # dados, agendamentos (com área "Link da teleconsulta"), linha do tempo, pendências, conversa
 │               ├── Fila/             # atendimentos humanos por equipe
 │               ├── Chat/             # conversa em atendimento
 │               ├── Agenda/           # calendário + lista "aguardando agendamento"
@@ -289,7 +289,7 @@ Remarcar ou cancelar **cancela e recria** esses jobs.
 | Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 8.3); `faltou` → envia 8.4 |
 | Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `POST /pacientes/importar` (planilha) |
 | Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/validar` |
-| Agendamentos | `GET /agendamentos?de=&ate=&status=`, `POST /pacientes/:id/agendamentos` (envia confirmação), `PATCH /agendamentos/:id`, `POST /agendamentos/:id/remarcar`, `POST /agendamentos/:id/cancelar` |
+| Agendamentos | `GET /agendamentos?de=&ate=&status=`, `POST /pacientes/:id/agendamentos` (envia confirmação), `PATCH /agendamentos/:id`, `POST /agendamentos/:id/remarcar`, `POST /agendamentos/:id/cancelar`, `PUT /agendamentos/:id/link` (link + horário de envio), `POST /agendamentos/:id/link/enviar` (enviar agora / reenviar) |
 | Agenda | `GET /agenda?de=&ate=&servico=` (calendário), `GET /agenda/sugestao?servico=&dataProcedimento=` (data sugerida + horários já ocupados), `GET /agendamentos?status=solicitado,remarcacao_solicitada` (aguardando agendamento) |
 | Campanhas | `POST /campanhas`, `POST /campanhas/:id/enviar`, `GET /campanhas/:id` |
 | Fila | `GET /atendimentos?equipe=&status=`, `POST /atendimentos/:id/assumir`, `POST /atendimentos/:id/resolver` |

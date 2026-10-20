@@ -241,7 +241,8 @@ visão em calendário dos próprios `agendamentos`.
 | descricao | text | ex.: "Cateterismo", "Teleconsulta de acompanhamento" |
 | data_hora | timestamptz null | null enquanto `solicitado` |
 | duracao_min | int | |
-| link_teleconsulta | text null | |
+| link_teleconsulta | text null | inserido pela equipe na área "Link da teleconsulta"; padrão = `servicos.link_padrao` |
+| link_atualizado_por / link_atualizado_em | FK usuarios / timestamptz | última alteração do link (histórico completo na auditoria) |
 | orientacoes | text | copiado do serviço, editável |
 | status | enum `status_agendamento` | ver abaixo |
 | origem | enum | `equipe`, `campanha`, `solicitacao_bot` (paciente pediu pelo bot; equipe definiu a data), `remarcacao` |
@@ -253,7 +254,8 @@ visão em calendário dos próprios `agendamentos`.
 | lembretes_enviados | int | controle da regra de não resposta |
 | presenca_confirmada_em | timestamptz null | resposta ao lembrete (3.3) |
 | link_enviar_em | timestamptz null | calculado de `data_hora - servico.link_minutos_antes`, editável |
-| link_enviado_em | timestamptz null | |
+| link_enviado_em | timestamptz null | último envio (inclui "Enviar agora" e "Reenviar") |
+| link_envio_status | enum | `sem_link`, `programado`, `enviado`, `falhou` |
 | realizado_em | timestamptz null | equipe marca → dispara agradecimento/avaliação |
 | avaliacao_enviada_em | timestamptz null | |
 | ultimo_envio_em | timestamptz | |

@@ -438,13 +438,31 @@ peito", "aperto no peito", "falta de ar", "sangramento", "desmaio",
 
 ### 4.13 Link da teleconsulta
 - Enviado **automaticamente** no momento definido pela equipe (mensagem 7).
-- O momento é configurável por serviço (ex.: 10 min antes) e pode ser
-  ajustado em cada agendamento.
-- O link é cadastrado no agendamento (ou padrão da agenda).
-  Funciona com link fixo por sala ou gerado por consulta; padrão: 10 min
-  antes (sugestão adotada – validar).
-- Só é enviado se o agendamento estiver confirmado/aguardando (não
-  cancelado). Se o link estiver vazio na hora, gera alerta para a equipe.
+
+**Área do link na teleconsulta do paciente.** Na ficha do paciente, cada
+teleconsulta tem um bloco **"Link da teleconsulta"** com:
+
+| Campo / ação | Descrição |
+|---|---|
+| Link | Campo para colar o link da sala (Meet, Teams, Jitsi etc.). Pode ser inserido ao criar o agendamento ou depois, a qualquer momento até o envio |
+| Enviar em | Data/hora do envio automático. Preenchido sozinho (padrão do serviço, ex.: 10 min antes) e editável |
+| Situação | *Sem link* · *Link cadastrado – envio programado para dd/mm hh:mm* · *Enviado em dd/mm hh:mm* · *Falha no envio* |
+| Botão **Enviar agora** | Envia o link imediatamente (ex.: médico já está na sala) |
+| Botão **Reenviar** | Após o envio, se o paciente disser que não recebeu ou o link mudou |
+| Histórico | Quem cadastrou/alterou o link e quando (auditoria) |
+
+Regras:
+- Se o serviço tiver um **link fixo de sala**, ele já vem preenchido e pode
+  ser trocado só para aquela consulta.
+- O sistema confere se o texto é um link válido (começa com `https://`).
+- Alterar o link **depois do envio** pergunta se deve reenviar ao paciente.
+- **Teleconsultas sem link** aparecem em destaque na agenda do dia e na
+  lista; se chegar a hora do envio sem link, a equipe recebe alerta e a
+  mensagem não sai.
+- Só é enviado se o agendamento não estiver cancelado. Remarcar mantém o
+  link e recalcula o horário de envio.
+- Quem pode inserir/alterar: Admin, Supervisão, Atendente e Equipe
+  específica (na própria equipe).
 
 ### 4.14 Após a teleconsulta
 1. A equipe marca a consulta como **realizada** (ou **faltou**).
