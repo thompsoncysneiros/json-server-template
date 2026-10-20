@@ -1,7 +1,7 @@
 # Arquitetura e Estrutura de Código (proposta)
 
-Planejamento – nada implementado ainda. Ver [`REQUISITOS.md`](REQUISITOS.md)
-e [`BANCO_DE_DADOS.md`](BANCO_DE_DADOS.md).
+Planejamento – nada implementado ainda. Ver [`REQUISITOS.md`](REQUISITOS.md),
+[`BANCO_DE_DADOS.md`](BANCO_DE_DADOS.md) e [`MENSAGENS.md`](MENSAGENS.md).
 
 ---
 
@@ -75,7 +75,8 @@ procape-saude-digital/
 │   │       ├── config/               # variáveis de ambiente validadas
 │   │       ├── common/               # guards, filtros de erro, paginação, utils (CPF, telefone, datas)
 │   │       ├── modules/
-│   │       │   ├── auth/             # login, JWT, perfis
+│   │       │   ├── auth/             # login, JWT, 2FA, guard de permissões e escopo por equipe
+│   │       │   ├── perfis/           # níveis de acesso e matriz de permissões
 │   │       │   ├── usuarios/
 │   │       │   ├── equipes/
 │   │       │   ├── servicos/
@@ -88,7 +89,12 @@ procape-saude-digital/
 │   │       │   ├── atendimentos/     # fila humana
 │   │       │   ├── pendencias/
 │   │       │   ├── notificacoes/     # gateway Socket.IO
-│   │       │   ├── modelos-mensagem/
+│   │       │   ├── modelos-mensagem/ # textos editáveis, status de aprovação Meta, variáveis
+│   │       │   ├── comunicacoes/     # registro de envios, lembretes e respostas
+│   │       │   ├── orientacoes/      # respostas cadastradas que o bot pode dar
+│   │       │   ├── formularios/      # formulários de avaliação por serviço
+│   │       │   ├── horarios/         # expediente e feriados
+│   │       │   ├── relatorios/
 │   │       │   ├── configuracoes/
 │   │       │   └── auditoria/        # interceptor que registra acessos/alterações
 │   │       ├── whatsapp/
@@ -104,17 +110,22 @@ procape-saude-digital/
 │   │       │   │   ├── inicio.ts             # aviso LGPD + identificação pelo número
 │   │       │   │   ├── identificacao.ts      # CPF/Cartão SUS + data de nascimento, troca de telefone
 │   │       │   │   ├── servico.ts            # qual serviço
-│   │       │   │   ├── menu.ts               # 5 opções
+│   │       │   │   ├── menu.ts               # 6 opções (lista)
 │   │       │   │   ├── agendamento.ts        # coleta, prontuário, horários, reserva
 │   │       │   │   ├── prontuario.ts         # coleta de dados para abertura
 │   │       │   │   ├── confirmacao.ts        # resposta 1/2/3 da mensagem de agendamento
 │   │       │   │   ├── remarcacao.ts
 │   │       │   │   ├── cancelamento.ts
 │   │       │   │   ├── primeiro-contato.ts   # pré-cateterismo (exames + dados)
-│   │       │   │   └── encaminhamento.ts     # falar com a equipe / automático
-│   │       │   └── textos/                   # textos fixos do bot (fora do código de fluxo)
+│   │       │   │   ├── confirmacao-presenca.ts # Confirmo / Preciso remarcar / Cancelar
+│   │       │   │   ├── orientacoes.ts        # lista e busca nas orientações cadastradas
+│   │       │   │   ├── pendencia-paciente.ts # recebe documento pedido na msg 9.3
+│   │       │   │   └── encaminhamento.ts     # falar com a equipe / automático / fora do horário
+│   │       │   └── textos/                   # só textos de fallback; os oficiais vêm de modelos_mensagem
 │   │       └── jobs/
-│   │           ├── nao-resposta.job.ts       # lembrete +24h, marca sem_resposta +48h
+│   │           ├── nao-resposta.job.ts       # lembrete 1, lembrete 2, depois encaminha
+│   │           ├── envio-link.job.ts         # link da teleconsulta no horário definido
+│   │           ├── pos-consulta.job.ts       # agradecimento + formulário após "realizada"
 │   │           ├── lembrete-consulta.job.ts
 │   │           ├── inatividade.job.ts        # encerra conversas (bot X min, equipe 30 min)
 │   │           └── disparo-campanha.job.ts   # envio em lote respeitando limite da Meta
@@ -133,7 +144,19 @@ procape-saude-digital/
 │               ├── Agenda/           # calendário + disponibilidade
 │               ├── Campanhas/        # importação e disparo em lote
 │               ├── Pendencias/
-│               └── Configuracoes/    # serviços, modelos de mensagem, prazos, usuários
+│               └── Admin/            # área administrativa – protegida por permissão
+│                   ├── Usuarios/
+│                   ├── Perfis/       # matriz de permissões (só Admin)
+│                   ├── Equipes/
+│                   ├── Servicos/
+│                   ├── Mensagens/    # editor com pré-visualização e status Meta
+│                   ├── Orientacoes/
+│                   ├── Formularios/
+│                   ├── Horarios/     # expediente e feriados
+│                   ├── Prazos/       # lembretes, link, travas
+│                   ├── Auditoria/
+│                   ├── Relatorios/
+│                   └── Integracoes/  # só Admin
 │
 ├── packages/
 │   └── shared/                       # enums e tipos usados por api e web (status, cores, motivos)
@@ -203,8 +226,12 @@ sequenceDiagram
   qualquer etapa.
 - Palavras de urgência (configuráveis) → prioridade `urgente` +
   encaminhamento.
-- Resposta não entendida → repete a pergunta; na 2ª vez, encaminha
-  (`nao_entendido`).
+- Resposta não entendida → envia a mensagem 12 (menu de 6 opções); na 2ª
+  vez, encaminha (`nao_entendido`).
+- Toda mensagem do bot vem de `modelos_mensagem` pela **chave**; o código
+  nunca tem texto fixo para o paciente (a Supervisão edita sem deploy).
+- Encaminhamento fora do expediente (`horarios_atendimento`/`feriados`) →
+  mensagem 10 além da 11.
 - Ação sensível exige `identidade_validada`.
 - O bot nunca envia dados pessoais; mensagens só com primeiro nome, data,
   hora e link.
@@ -212,10 +239,33 @@ sequenceDiagram
   template.
 
 ### 4.4 Rotina de "não resposta" (jobs)
-Ao enviar uma confirmação: cria job `lembrete_sem_resposta` para +24h.
-Se o paciente responder, o job é cancelado. Se executar: envia o lembrete e
-cria `marcar_sem_resposta` para +24h → status `sem_resposta` (🔵), pendência
-`ligar_sem_resposta` e notificação para a equipe.
+Todo envio que espera resposta gera um registro em `comunicacoes` e um job
+`lembrete_sem_resposta` para +24h. Se o paciente responder, o job é
+cancelado e a comunicação marcada como respondida. Se executar: envia o
+lembrete 1 (nova comunicação com `sequencia = 1`) e agenda o próximo; após
+o lembrete 2 e mais 24h → status `sem_resposta` (🔵), `requer_equipe`,
+pendência `ligar_sem_resposta` e notificação. Quantidade e intervalos vêm
+das configurações.
+
+### 4.5 Ciclo de vida do agendamento (jobs)
+Ao salvar/confirmar um agendamento, o sistema agenda:
+
+| Job | Quando | Mensagem |
+|---|---|---|
+| `lembrete_consulta` | `data_hora - lembrete_horas_antes` | 3.2 + confirmação de presença |
+| `enviar_link` | `link_enviar_em` | 7 (alerta à equipe se não houver link) |
+| `enviar_avaliacao` | após a equipe marcar "realizada" | 2.8 / 9.x com o formulário do serviço |
+
+Remarcar ou cancelar **cancela e recria** esses jobs.
+
+### 4.6 Controle de acesso
+- Cada rota da API declara a permissão exigida (ex.: `fila.atender`); um
+  guard confere o perfil do usuário (`perfil_permissoes`) e, para perfis
+  com `escopo_equipe`, filtra os dados pelas equipes do usuário.
+- O front recebe a lista de permissões no login e só monta os menus
+  permitidos – a proteção real é a da API.
+- CPF/telefone mascarados para quem não tem `pacientes.ver_dados_completos`.
+- Toda ação administrativa e toda abertura de ficha gera `auditoria`.
 
 ---
 
@@ -223,7 +273,10 @@ cria `marcar_sem_resposta` para +24h → status `sem_resposta` (🔵), pendênci
 
 | Recurso | Rotas |
 |---|---|
-| Auth | `POST /auth/login`, `GET /auth/me` |
+| Auth | `POST /auth/login`, `POST /auth/2fa`, `GET /auth/me` (dados + permissões) |
+| Admin | CRUD `/admin/usuarios`, `/admin/perfis` (+ `PUT /admin/perfis/:id/permissoes`), `/admin/equipes`, `/admin/servicos`, `/admin/modelos-mensagem`, `/admin/orientacoes`, `/admin/formularios`, `/admin/horarios`, `/admin/feriados`; `GET/PUT /admin/configuracoes`; `GET /admin/auditoria` |
+| Comunicações | `GET /pacientes/:id/comunicacoes`, `GET /comunicacoes?requerEquipe=true` |
+| Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 9.3) |
 | Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `POST /pacientes/importar` (planilha) |
 | Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/validar` |
 | Prontuário | `PUT /pacientes/:id/dados-prontuario`, `POST /pacientes/:id/prontuario` (registrar nº → retoma fluxo) |
@@ -233,7 +286,6 @@ cria `marcar_sem_resposta` para +24h → status `sem_resposta` (🔵), pendênci
 | Fila | `GET /atendimentos?equipe=&status=`, `POST /atendimentos/:id/assumir`, `POST /atendimentos/:id/resolver` |
 | Conversas | `GET /conversas/:id/mensagens`, `POST /conversas/:id/mensagens` (equipe envia), `POST /conversas/:id/encerrar`, `POST /conversas/:id/devolver-ao-bot` |
 | Pendências | `GET /pendencias`, `PATCH /pendencias/:id` |
-| Config | `GET/PUT /configuracoes`, CRUD `/servicos`, `/modelos-mensagem`, `/usuarios`, `/equipes` |
 | WhatsApp | `GET /webhooks/whatsapp` (verificação Meta), `POST /webhooks/whatsapp` |
 
 Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
@@ -269,11 +321,11 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 | Etapa | Dias | Entregas |
 |---|---|---|
 | 0. Preparação | antes | VPS, conta Meta Business + número de teste, textos dos templates enviados para aprovação |
-| 1. Base | 1–3 | Monorepo, Docker Compose, schema e migrações, auth, seed fictício |
+| 1. Base | 1–3 | Monorepo, Docker Compose, schema e migrações, auth com níveis de acesso, seed fictício |
 | 2. Cadastro e agenda | 3–5 | Pacientes, serviços, agendamentos, lista com cores/filtros, importação |
-| 3. WhatsApp + bot MVP | 5–8 | Webhook, provedor, confirmação 1/2/3, encaminhamento, fila, chat, notificações |
-| 4. Jobs | 8–10 | Não resposta, lembretes, travas de tempo, disparo em lote |
-| 5. Testes com a equipe | 11–20 | Testes da Anna, ajustes; em paralelo: identificação completa, menu, prontuário, linha do tempo |
+| 3. WhatsApp + bot MVP | 5–8 | Webhook, provedor, modelos de mensagem, primeiro contato, confirmação, confirmação de presença, encaminhamento (com fora do horário), fila, chat, notificações |
+| 4. Jobs | 8–10 | Não resposta (2 lembretes), lembrete da consulta, envio do link, agradecimento/avaliação, travas de tempo, disparo em lote |
+| 5. Testes com a equipe | 11–20 | Testes da Anna, ajustes; em paralelo: identificação completa, menu, orientações, pendência do paciente, prontuário, linha do tempo, demais telas admin |
 | Depois | – | Disponibilidade/autoagendamento, remarcação automática, IA na triagem |
 
 **Dependência crítica**: aprovação dos templates pela Meta e verificação da
