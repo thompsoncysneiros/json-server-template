@@ -144,7 +144,7 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 | Regras e prazos | Lembretes, travas de tempo, momento de envio do link | Admin, Supervisão |
 | Auditoria | Quem viu/alterou o quê | Admin, Supervisão |
 | Relatórios | Indicadores (confirmação, não resposta, tempo de fila) | Admin, Supervisão |
-| Integrações (WhatsApp, backups) | Credenciais e configurações técnicas | **Somente Admin** |
+| Integrações (WhatsApp, backups) | Credenciais e configurações técnicas | Admin, Supervisão |
 
 ### 3.9 Níveis de acesso
 Quatro níveis, conforme as funções da equipe. Cada usuário
@@ -154,7 +154,7 @@ pode fazer e a equipe define *quais filas/pacientes* vê.
 | Nível | Para quem | Resumo |
 |---|---|---|
 | **1. Administrador** | TI / Thompson | Tudo, inclusive integrações e permissões. Poucos usuários |
-| **2. Supervisão** | Coordenação da Saúde Digital (ex.: Mari) | Tudo da operação + área administrativa (exceto integrações), relatórios, auditoria, exportação |
+| **2. Supervisão** | Coordenação da Saúde Digital (ex.: Mari) | Tudo da operação + área administrativa (inclusive integrações e credenciais), relatórios, auditoria, exportação. Só não altera perfis/permissões nem usuários de nível 1–2 |
 | **3. Atendente / Enfermagem** | Equipe da Saúde Digital (ex.: Anna) | Operação do dia a dia em todas as filas das suas equipes |
 | **4. Equipe específica** | Pesquisa FA, aconselhamento genético | Só a própria fila, pendências e pacientes vinculados ao seu serviço |
 
@@ -180,7 +180,7 @@ Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leit
 | Usuários e equipes | ✅ | ✅ (níveis 3–4) | ❌ | ❌ |
 | Perfis e permissões | ✅ | ❌ | ❌ | ❌ |
 | Auditoria | ✅ | ✅ | ❌ | ❌ |
-| Integrações / credenciais | ✅ | ❌ | ❌ | ❌ |
+| Integrações / credenciais | ✅ | ✅ | ❌ | ❌ |
 
 Regras:
 - Permissões ficam no banco (perfil → lista de permissões), então a matriz
@@ -190,7 +190,11 @@ Regras:
 - Toda ação em área restrita e toda visualização de paciente vai para a
   auditoria.
 - Senha forte e expiração de sessão; **[PENDENTE]** exigir 2FA para Admin e
-  Supervisão.
+  Supervisão (recomendado, já que ambos acessam credenciais).
+- Credenciais (token do WhatsApp etc.) ficam **criptografadas** no banco e,
+  depois de salvas, aparecem **mascaradas** na tela (`••••1234`): é possível
+  substituir, mas não ler o valor completo. Toda alteração vai para a
+  auditoria.
 
 ---
 

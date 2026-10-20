@@ -154,7 +154,7 @@ procape-saude-digital/
 │                   ├── Prazos/       # lembretes, link, travas
 │                   ├── Auditoria/
 │                   ├── Relatorios/
-│                   └── Integracoes/  # só Admin
+│                   └── Integracoes/  # Admin e Supervisão; credenciais mascaradas
 │
 ├── packages/
 │   └── shared/                       # enums e tipos usados por api e web (status, cores, motivos)
