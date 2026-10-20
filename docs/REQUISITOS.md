@@ -133,7 +133,7 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 
 | Tela | O que faz | Quem acessa |
 |---|---|---|
-| Usuários | Criar, desativar, redefinir senha, atribuir nível e equipes | Admin, Supervisão (até o próprio nível, exclusivo) |
+| Usuários | Criar, desativar, redefinir senha, atribuir nível e equipes | Admin (todos os níveis); Supervisão (só níveis 3 e 4 – não cria nem altera outro Supervisor ou Admin) |
 | Perfis e permissões | Ajustar o que cada nível pode fazer | Admin |
 | Equipes | Equipes e membros | Admin, Supervisão |
 | Serviços | Linhas de cuidado, equipe responsável, modelos de mensagem, prazos e formulário | Admin, Supervisão |
