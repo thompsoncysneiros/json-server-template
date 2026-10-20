@@ -269,7 +269,7 @@ define dia e hora na plataforma.
    não existir, criar o pré-cadastro.
 7. Perguntar, de forma **opcional**, o número do prontuário ("Se você já é
    paciente do PROCAPE e sabe o número do seu prontuário, informe; se não,
-   toque em *Não sei / não tenho*").
+   responda *0*").
 8. Registrar a **solicitação de agendamento** (status 🟣 `solicitado`) e criar
    a pendência "agendar" para a equipe do serviço.
 9. Informar ao paciente que a solicitação foi recebida e que **a equipe
