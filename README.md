@@ -1,4 +1,23 @@
-# JSON Server Template
+# PROCAPE – Saúde Digital (API mock)
+
+Protótipo da API do sistema de agendamento via WhatsApp + plataforma de gestão
+do PROCAPE. Os requisitos levantados em reunião estão em
+[`docs/REQUISITOS.md`](docs/REQUISITOS.md).
+
+> **Atenção:** `db/seeds.json` contém **somente dados fictícios**. Não inserir
+> dados reais de pacientes neste ambiente.
+
+Recursos disponíveis: `/pacientes`, `/agendamentos`, `/campanhas`,
+`/conversas`, `/mensagens`, `/solicitacoes`, `/usuarios`, `/templates`,
+`/configuracoes`. Exemplos:
+
+- `GET /agendamentos?status=sem_resposta&_expand=paciente`
+- `GET /solicitacoes?status=aberta&_sort=criadaEm&_order=asc&_expand=paciente`
+- `GET /pacientes/3?_embed=agendamentos`
+
+---
+
+## JSON Server Template
 
 ## Setup
 
