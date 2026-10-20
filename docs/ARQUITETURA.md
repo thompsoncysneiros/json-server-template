@@ -119,7 +119,7 @@ procape-saude-digital/
 │   │       │   │   ├── primeiro-contato.ts   # pré-cateterismo (exames + dados)
 │   │       │   │   ├── confirmacao-presenca.ts # Confirmo / Preciso remarcar / Cancelar
 │   │       │   │   ├── orientacoes.ts        # lista e busca nas orientações cadastradas
-│   │       │   │   ├── pendencia-paciente.ts # recebe documento pedido na msg 9.3
+│   │       │   │   ├── pendencia-paciente.ts # recebe documento pedido na msg 8.3
 │   │       │   │   └── encaminhamento.ts     # falar com a equipe / automático / fora do horário
 │   │       │   └── textos/                   # só textos de fallback; os oficiais vêm de modelos_mensagem
 │   │       └── jobs/
@@ -254,7 +254,7 @@ Ao salvar/confirmar um agendamento, o sistema agenda:
 |---|---|---|
 | `lembrete_consulta` | `data_hora - lembrete_horas_antes` | 3.2 + confirmação de presença |
 | `enviar_link` | `link_enviar_em` | 7 (alerta à equipe se não houver link) |
-| `enviar_avaliacao` | após a equipe marcar "realizada" | 2.8 / 9.x com o formulário do serviço |
+| `enviar_avaliacao` | após a equipe marcar "realizada" | 8.1 / 8.2 com o formulário do serviço |
 
 Remarcar ou cancelar **cancela e recria** esses jobs.
 
@@ -276,7 +276,7 @@ Remarcar ou cancelar **cancela e recria** esses jobs.
 | Auth | `POST /auth/login`, `POST /auth/2fa`, `GET /auth/me` (dados + permissões) |
 | Admin | CRUD `/admin/usuarios`, `/admin/perfis` (+ `PUT /admin/perfis/:id/permissoes`), `/admin/equipes`, `/admin/servicos`, `/admin/modelos-mensagem`, `/admin/orientacoes`, `/admin/formularios`, `/admin/horarios`, `/admin/feriados`; `GET/PUT /admin/configuracoes`; `GET /admin/auditoria` |
 | Comunicações | `GET /pacientes/:id/comunicacoes`, `GET /comunicacoes?requerEquipe=true` |
-| Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 9.3) |
+| Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 8.3); `faltou` → envia 8.4 |
 | Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `POST /pacientes/importar` (planilha) |
 | Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/validar` |
 | Prontuário | `PUT /pacientes/:id/dados-prontuario`, `POST /pacientes/:id/prontuario` (registrar nº → retoma fluxo) |

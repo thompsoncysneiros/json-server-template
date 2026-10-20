@@ -273,11 +273,11 @@ Regras:
      (bot oferece horários ou a equipe agenda) e o paciente é avisado.
 
 ### 4.5 Pré-cateterismo (regulação/mutirão) – primeiro contato ativo
-Textos em `MENSAGENS.md` (1.1 a 1.8).
+Textos em `MENSAGENS.md`.
 1. Disparo da mensagem padrão (1.1) – informa que a teleconsulta é online,
-   que exige exames de sangue dos últimos 3 meses e pede a disponibilidade.
-2. Paciente responde → bot apresenta os **horários disponíveis** (1.2).
-   Sugestão: botão "Ver horários" em vez de texto livre (ajuste B).
+   que o link chega pelo WhatsApp e que exige exames de sangue dos últimos
+   3 meses; botão **Ver horários disponíveis**.
+2. Paciente toca no botão → bot apresenta os **horários disponíveis** (H).
    - "Nenhum serve" → equipe.
 3. Bot solicita **exames** (anexos, opcional) e coleta os **dados para
    abertura do prontuário** (seção 4.4), quando necessário.
@@ -292,16 +292,16 @@ Textos em `MENSAGENS.md` (1.1 a 1.8).
 - Este primeiro contato **não tem trava de tempo**.
 
 ### 4.5.1 Pós-angioplastia
-Textos em `MENSAGENS.md` (2.1 a 2.8).
+Textos em `MENSAGENS.md`.
 1. Convite para agendamento da consulta de acompanhamento (2.1).
-2. Horários disponíveis ou agendamento pela equipe → confirmação (2.2) com
+2. Horários disponíveis (H) ou agendamento pela equipe → confirmação (2.2) com
    data, horário, aviso de online e orientações de participação.
-3. Lembrete perto da data (2.3) com **confirmação de presença** (2.4):
-   *Confirmo minha presença* / *Preciso remarcar* (+ *Cancelar*, ajuste D).
-4. Não confirma → lembrete e, pela regra da equipe, sinaliza/encaminha (2.5).
-5. Remarcação (2.6) → 4.7. Cancelamento (2.7) → 4.8.
+3. Lembrete perto da data (3.2) com **confirmação de presença**:
+   *Confirmo minha presença* · *Preciso remarcar* · *Cancelar*.
+4. Não confirma → lembretes L1/L2 e depois equipe (4.9).
+5. Remarcação → 4.7. Cancelamento → 4.8.
 6. Link da teleconsulta no momento definido (4.13).
-7. Após a teleconsulta → agradecimento + formulário de avaliação (2.8 / 4.14).
+7. Após a teleconsulta → agradecimento + formulário de avaliação (8.1 / 4.14).
 
 ### 4.6 Confirmação de teleconsulta / procedimento
 Mensagem automática ao salvar o agendamento (modelo genérico 3.1, usado
@@ -316,8 +316,7 @@ contendo:
   momento definido (4.13).
 
 Confirmação de presença: enviada junto do **lembrete** perto da consulta
-(3.2/3.3). Respostas: **1 – Confirmo minha presença · 2 – Preciso remarcar**
-(+ **Cancelar**, sugestão – ver `MENSAGENS.md`, ajuste D).
+(3.2). Botões: **Confirmo minha presença · Preciso remarcar · Cancelar**.
 - Confirmar → 🟢 e aparece na agenda.
 - Remarcar → seção 4.7 (🟡).
 - Cancelar → seção 4.8 (🔴).
@@ -409,22 +408,23 @@ orientando a procurar emergência? Requer validação clínica.
 - O momento é configurável por serviço (ex.: 10 min antes) e pode ser
   ajustado em cada agendamento.
 - O link é cadastrado no agendamento (ou padrão da agenda).
-  **[PENDENTE]** plataforma de vídeo e se o link é fixo por sala ou gerado
-  por consulta.
+  Funciona com link fixo por sala ou gerado por consulta; padrão: 10 min
+  antes (sugestão adotada – validar).
 - Só é enviado se o agendamento estiver confirmado/aguardando (não
   cancelado). Se o link estiver vazio na hora, gera alerta para a equipe.
 
 ### 4.14 Após a teleconsulta
 1. A equipe marca a consulta como **realizada** (ou **faltou**).
 2. Realizada → bot envia **agradecimento + formulário de avaliação** do
-   serviço/tipo de consulta (2.8 / 9.1–9.2). **[PENDENTE]** enviar
-   imediatamente ou X horas depois.
+   serviço/tipo de consulta (8.1 / 8.2). Sugestão adotada: envio
+   imediato (ajustável em Admin › Prazos).
 3. **Pendência do paciente**: se a equipe identificar algo que o paciente
    precisa enviar (documento, exame, informação), registra a pendência na
-   plataforma e o bot envia a mensagem 9.3. Quando o paciente envia o
+   plataforma e o bot envia a mensagem 8.3. Quando o paciente envia o
    arquivo/resposta, a pendência é marcada como recebida e a equipe é
    notificada. Sem resposta → mesma regra de lembretes (4.9).
-4. Faltou → **[PENDENTE]** regra (reagendar? encaminhar?).
+4. Faltou → mensagem 8.4 (*Quero remarcar* / *Falar com a equipe*) e,
+   sem resposta, regra de lembretes (4.9) e depois equipe.
 
 ### 4.15 Orientações
 - O bot responde **somente** com orientações cadastradas pela equipe na área
@@ -511,17 +511,20 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 
 | Tema | Reunião | Especificação nova | Proposta |
 |---|---|---|---|
-| Remarcação | Vai direto para a equipe | Bot remarca se houver agenda | Configurável por serviço; pré-cateterismo = equipe |
+| Remarcação | Vai direto para a equipe | Bot remarca se houver agenda | **Adotado:** configurável por serviço; pré-cateterismo = equipe |
 | Cancelamento | Opções na própria mensagem, sem perguntar qual consulta | Confirmar qual consulta | Automático quando vier da mensagem; perguntar só se vier do menu com 2+ consultas |
 | Agendamento | Equipe define dia e hora | Bot verifica agenda e oferece opções | Ambos; autoagendamento ligado por serviço (fase 3) |
 | Telefone | Já é o número do WhatsApp | Solicitar telefone | Confirmar o número em uso |
 | Não resposta | Marcar azul no 3º dia | Aguardando confirmação + regra da Saúde Digital | Azul + regra configurável (**[PENDENTE]**) |
 | Serviços | 3 linhas | + Aconselhamento genético e Outros | Serviços cadastráveis |
-| Envio do link | – | Msg 1.1: e-mail/SMS · Msgs 1.3, 2.2, 3.1, 7: WhatsApp | WhatsApp (mensagem 7) |
-| Disponibilidade (pré-cat.) | Equipe define dia/hora | Msg 1.1 pede "sua disponibilidade" (texto livre) | Bot oferece lista de horários cadastrados |
-| Confirmação de presença | 1/2/3 (confirmar/remarcar/cancelar) | 1 Confirmo / 2 Preciso remarcar | 3 botões, incluindo Cancelar |
-| Não resposta | 1 lembrete | 2 lembretes e depois equipe | 2 lembretes (configurável) |
-| Menu | 5 opções | 6 opções (+ Orientações) | 6 opções |
+| Envio do link | – | Msg 1.1: e-mail/SMS · Msgs 1.3, 2.2, 3.1, 7: WhatsApp | **Adotado:** WhatsApp (mensagem 7) |
+| Disponibilidade (pré-cat.) | Equipe define dia/hora | Msg 1.1 pede "sua disponibilidade" (texto livre) | **Adotado:** botão "Ver horários disponíveis" + lista |
+| Confirmação de presença | 1/2/3 (confirmar/remarcar/cancelar) | 1 Confirmo / 2 Preciso remarcar | **Adotado:** 3 botões, incluindo Cancelar |
+| Não resposta | 1 lembrete | 2 lembretes e depois equipe | **Adotado:** 2 lembretes (configurável) |
+| Menu | 5 opções | 6 opções (+ Orientações) | **Adotado:** 6 opções (lista) |
+
+Os textos das mensagens já foram ajustados conforme essas propostas – ver
+`MENSAGENS.md`, seções 4 e 5 (aguardando validação da equipe).
 
 A primeira especificação pulava as seções **9, 10 e 12**; a especificação
 de mensagens cobriu orientações, lembretes, avaliação e fora do horário.

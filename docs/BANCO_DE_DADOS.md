@@ -356,9 +356,9 @@ houve resposta, status e necessidade de intervenção.
 | id | uuid PK | |
 | paciente_id | FK | |
 | agendamento_id | FK null | |
-| pendencia_id | FK null | quando for a mensagem 9.3 |
+| pendencia_id | FK null | quando for a mensagem 8.3 |
 | modelo_mensagem_id | FK | qual texto foi usado |
-| finalidade | enum | `primeiro_contato`, `convite`, `confirmacao_agendamento`, `lembrete_sem_resposta`, `lembrete_consulta`, `link_teleconsulta`, `agradecimento_avaliacao`, `pendencia_paciente`, `remarcacao`, `cancelamento` |
+| finalidade | enum | `primeiro_contato`, `convite`, `confirmacao_agendamento`, `lembrete_sem_resposta`, `lembrete_consulta`, `link_teleconsulta`, `agradecimento_avaliacao`, `pendencia_paciente`, `faltou`, `remarcacao`, `cancelamento` |
 | sequencia | int | 0 = envio original, 1 = 1º lembrete, 2 = 2º lembrete |
 | comunicacao_origem_id | FK comunicacoes null | lembrete aponta para o envio original |
 | mensagem_id | FK mensagens | mensagem efetivamente enviada |
@@ -478,7 +478,7 @@ Ordenação da fila: `prioridade`, depois `aberto_em` ascendente.
 
 ### `pendencias`
 Tarefas que **não são conversa**, mas travam o fluxo do paciente. Podem
-depender da **equipe** ou do **paciente** (mensagem 9.3).
+depender da **equipe** ou do **paciente** (mensagem 8.3).
 | Coluna | Tipo | Observação |
 |---|---|---|
 | id | uuid PK | |
@@ -532,7 +532,7 @@ Chave/valor (`jsonb`) editável pela coordenação:
 | `nao_resposta.acao_final` | `sinalizar` (**[PENDENTE]**) |
 | `lembrete_consulta.horas_antes` | 24 (padrão; o serviço pode sobrescrever) |
 | `link.minutos_antes` | 10 (padrão; o serviço pode sobrescrever) |
-| `avaliacao.horas_apos_realizada` | 0 (**[PENDENTE]**) |
+| `avaliacao.horas_apos_realizada` | 0 (imediato) |
 | `bot.max_tentativas_nao_entendidas` | 2 |
 | `bot.palavras_urgencia` | `["dor no peito","sangramento","falta de ar"]` (**[PENDENTE]**) |
 
