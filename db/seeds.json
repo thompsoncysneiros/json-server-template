@@ -1,252 +1,52 @@
 {
-  "pacientes": [
+  "toys": [
     {
       "id": 1,
-      "nome": "Paciente Teste Um",
-      "cpf": "000.000.000-01",
-      "cartaoSus": "700000000000001",
-      "dataNascimento": "1958-03-12",
-      "telefone": "+5581900000001",
-      "prontuario": null,
-      "numeroSolicitacao": "REG-0001",
-      "linhaCuidado": "pre_cateterismo_regulacao",
-      "statusCadastro": "pre_cadastro",
-      "endereco": null,
-      "criadoEm": "2026-10-13T09:00:00-03:00"
+      "name": "Woody",
+      "image": "http://www.pngmart.com/files/3/Toy-Story-Woody-PNG-Photos.png",
+      "likes": 8
     },
     {
       "id": 2,
-      "nome": "Paciente Teste Dois",
-      "cpf": null,
-      "cartaoSus": "700000000000002",
-      "dataNascimento": "1964-07-30",
-      "telefone": "+5581900000002",
-      "prontuario": null,
-      "numeroSolicitacao": "REG-0002",
-      "linhaCuidado": "pre_cateterismo_regulacao",
-      "statusCadastro": "pre_cadastro",
-      "endereco": null,
-      "criadoEm": "2026-10-13T09:00:00-03:00"
+      "name": "Buzz Lightyear",
+      "image": "http://www.pngmart.com/files/6/Buzz-Lightyear-PNG-Transparent-Picture.png",
+      "likes": 14
     },
     {
       "id": 3,
-      "nome": "Paciente Teste Três",
-      "cpf": "000.000.000-03",
-      "cartaoSus": "700000000000003",
-      "dataNascimento": "1971-01-05",
-      "telefone": "+5581900000003",
-      "prontuario": null,
-      "numeroSolicitacao": "MUT-0001",
-      "linhaCuidado": "pre_cateterismo_mutirao",
-      "statusCadastro": "completo",
-      "endereco": "Rua Fictícia, 100 - Recife/PE",
-      "criadoEm": "2026-10-10T10:30:00-03:00"
+      "name": "Mr. Potato Head",
+      "image": "https://vignette.wikia.nocookie.net/universe-of-smash-bros-lawl/images/d/d8/Mr-potato-head-toy-story.gif/revision/latest?cb=20151129131217",
+      "likes": 3
     },
     {
       "id": 4,
-      "nome": "Paciente Teste Quatro",
-      "cpf": "000.000.000-04",
-      "cartaoSus": "700000000000004",
-      "dataNascimento": "1950-11-21",
-      "telefone": "+5581900000004",
-      "prontuario": "PRT-000004",
-      "numeroSolicitacao": null,
-      "linhaCuidado": "pos_angioplastia",
-      "statusCadastro": "completo",
-      "endereco": "Av. Exemplo, 200 - Olinda/PE",
-      "criadoEm": "2026-09-01T08:00:00-03:00"
+      "name": "Slinky Dog",
+      "image": "https://www.freeiconspng.com/uploads/slinky-png-transparent-1.png",
+      "likes": 4
     },
     {
       "id": 5,
-      "nome": "Paciente Teste Cinco",
-      "cpf": "000.000.000-05",
-      "cartaoSus": "700000000000005",
-      "dataNascimento": "1947-04-18",
-      "telefone": "+5581900000005",
-      "prontuario": "PRT-000005",
-      "numeroSolicitacao": null,
-      "linhaCuidado": "fibrilacao_atrial",
-      "statusCadastro": "completo",
-      "endereco": "Rua Modelo, 300 - Jaboatão/PE",
-      "criadoEm": "2026-08-15T14:00:00-03:00"
+      "name": "Rex",
+      "image": "http://umich.edu/~chemh215/W11HTML/SSG5/ssg5.2/FRex.png",
+      "likes": 1
+    },
+    {
+      "id": 6,
+      "name": "Bo Peep",
+      "image": "http://4.bp.blogspot.com/_OZHbJ8c71OM/Sog43CMFX2I/AAAAAAAADEs/0AKX0XslD4g/s400/bo.png",
+      "likes": 2
+    },
+    {
+      "id": 7,
+      "name": "Hamm",
+      "image": "https://cdn140.picsart.com/244090226021212.png?r1024x1024",
+      "likes": 0
+    },
+    {
+      "id": 8,
+      "name": "Little Green Men",
+      "image": "http://www.pngmart.com/files/3/Toy-Story-Alien-PNG-File.png",
+      "likes": -2
     }
-  ],
-  "agendamentos": [
-    {
-      "id": 1,
-      "pacienteId": 1,
-      "tipo": "teleconsulta",
-      "descricao": "Teleconsulta pré-cateterismo",
-      "dataHora": "2026-10-26T14:00:00-03:00",
-      "status": "aguardando",
-      "lembretesEnviados": 1,
-      "ultimoEnvioEm": "2026-10-19T09:00:00-03:00",
-      "respondidoEm": null,
-      "campanhaId": 1
-    },
-    {
-      "id": 2,
-      "pacienteId": 2,
-      "tipo": "teleconsulta",
-      "descricao": "Teleconsulta pré-cateterismo",
-      "dataHora": "2026-10-26T14:30:00-03:00",
-      "status": "sem_resposta",
-      "lembretesEnviados": 1,
-      "ultimoEnvioEm": "2026-10-18T09:00:00-03:00",
-      "respondidoEm": null,
-      "campanhaId": 1
-    },
-    {
-      "id": 3,
-      "pacienteId": 3,
-      "tipo": "teleconsulta",
-      "descricao": "Teleconsulta pré-cateterismo",
-      "dataHora": "2026-10-19T15:00:00-03:00",
-      "status": "confirmado",
-      "lembretesEnviados": 0,
-      "ultimoEnvioEm": "2026-10-12T09:00:00-03:00",
-      "respondidoEm": "2026-10-12T11:20:00-03:00",
-      "campanhaId": null
-    },
-    {
-      "id": 4,
-      "pacienteId": 3,
-      "tipo": "procedimento",
-      "descricao": "Cateterismo",
-      "dataHora": "2026-10-26T07:00:00-03:00",
-      "status": "remarcacao_solicitada",
-      "lembretesEnviados": 0,
-      "ultimoEnvioEm": "2026-10-19T16:00:00-03:00",
-      "respondidoEm": "2026-10-19T18:05:00-03:00",
-      "campanhaId": null
-    },
-    {
-      "id": 5,
-      "pacienteId": 4,
-      "tipo": "teleconsulta",
-      "descricao": "Teleconsulta de acompanhamento pós-angioplastia",
-      "dataHora": "2026-10-28T10:00:00-03:00",
-      "status": "cancelado",
-      "lembretesEnviados": 0,
-      "ultimoEnvioEm": "2026-10-17T09:00:00-03:00",
-      "respondidoEm": "2026-10-17T09:40:00-03:00",
-      "campanhaId": null
-    }
-  ],
-  "campanhas": [
-    {
-      "id": 1,
-      "nome": "Pré-cateterismo regulação – semana 26/10",
-      "linhaCuidado": "pre_cateterismo_regulacao",
-      "dataProcedimento": "2026-11-02",
-      "pacienteIds": [1, 2],
-      "templateId": 1,
-      "status": "enviada",
-      "enviadaEm": "2026-10-18T09:00:00-03:00"
-    }
-  ],
-  "conversas": [
-    {
-      "id": 1,
-      "pacienteId": 3,
-      "telefone": "+5581900000003",
-      "estado": "aguardando_humano",
-      "expira": true,
-      "iniciadaEm": "2026-10-19T18:00:00-03:00",
-      "ultimaAtividadeEm": "2026-10-19T18:05:00-03:00",
-      "atendenteId": null
-    },
-    {
-      "id": 2,
-      "pacienteId": 5,
-      "telefone": "+5581900000005",
-      "estado": "aguardando_humano",
-      "expira": true,
-      "iniciadaEm": "2026-10-20T08:10:00-03:00",
-      "ultimaAtividadeEm": "2026-10-20T08:14:00-03:00",
-      "atendenteId": null
-    },
-    {
-      "id": 3,
-      "pacienteId": 1,
-      "telefone": "+5581900000001",
-      "estado": "bot",
-      "expira": false,
-      "iniciadaEm": "2026-10-18T09:00:00-03:00",
-      "ultimaAtividadeEm": "2026-10-19T09:00:00-03:00",
-      "atendenteId": null
-    }
-  ],
-  "mensagens": [
-    { "id": 1, "conversaId": 1, "autor": "bot", "texto": "Olá! Seu cateterismo foi agendado para 26/10 às 07:00. Responda: 1 - Confirmar, 2 - Solicitar remarcação, 3 - Cancelar.", "anexo": null, "enviadaEm": "2026-10-19T16:00:00-03:00" },
-    { "id": 2, "conversaId": 1, "autor": "paciente", "texto": "2", "anexo": null, "enviadaEm": "2026-10-19T18:05:00-03:00" },
-    { "id": 3, "conversaId": 1, "autor": "bot", "texto": "Certo! Sua solicitação de remarcação foi enviada para a equipe, que entrará em contato em breve.", "anexo": null, "enviadaEm": "2026-10-19T18:05:10-03:00" },
-    { "id": 4, "conversaId": 2, "autor": "paciente", "texto": "Oi", "anexo": null, "enviadaEm": "2026-10-20T08:10:00-03:00" },
-    { "id": 5, "conversaId": 2, "autor": "bot", "texto": "Olá! Aqui é a Saúde Digital do PROCAPE. Para sua segurança, informe seu CPF.", "anexo": null, "enviadaEm": "2026-10-20T08:10:05-03:00" },
-    { "id": 6, "conversaId": 2, "autor": "paciente", "texto": "Estou com um sangramento desde ontem", "anexo": null, "enviadaEm": "2026-10-20T08:14:00-03:00" },
-    { "id": 7, "conversaId": 3, "autor": "bot", "texto": "Olá! Você foi regulado para realizar um cateterismo no PROCAPE. Podemos seguir com o agendamento da sua teleconsulta?", "anexo": null, "enviadaEm": "2026-10-18T09:00:00-03:00" },
-    { "id": 8, "conversaId": 3, "autor": "bot", "texto": "Olá! Lembrando: você foi regulado para realizar um cateterismo no PROCAPE. Por favor, responda esta mensagem.", "anexo": null, "enviadaEm": "2026-10-19T09:00:00-03:00" }
-  ],
-  "solicitacoes": [
-    {
-      "id": 1,
-      "pacienteId": 3,
-      "conversaId": 1,
-      "agendamentoId": 4,
-      "tipo": "remarcacao",
-      "queixa": null,
-      "equipe": "assistencial",
-      "status": "aberta",
-      "atendenteId": null,
-      "criadaEm": "2026-10-19T18:05:00-03:00"
-    },
-    {
-      "id": 2,
-      "pacienteId": 5,
-      "conversaId": 2,
-      "agendamentoId": null,
-      "tipo": "falar_com_equipe",
-      "queixa": "Sangramento desde ontem",
-      "equipe": "pesquisa",
-      "status": "aberta",
-      "atendenteId": null,
-      "criadaEm": "2026-10-20T08:14:00-03:00"
-    }
-  ],
-  "usuarios": [
-    { "id": 1, "nome": "Coordenação (teste)", "perfil": "coordenacao" },
-    { "id": 2, "nome": "Atendente Manhã (teste)", "perfil": "atendente" },
-    { "id": 3, "nome": "Atendente Tarde (teste)", "perfil": "atendente" },
-    { "id": 4, "nome": "Equipe Pesquisa FA (teste)", "perfil": "pesquisa" }
-  ],
-  "templates": [
-    {
-      "id": 1,
-      "chave": "primeiro_contato_pre_cateterismo",
-      "texto": "Olá, {nome}! Você foi regulado para realizar um cateterismo no PROCAPE. Podemos seguir com o agendamento da sua teleconsulta?"
-    },
-    {
-      "id": 2,
-      "chave": "agendamento",
-      "texto": "Olá, {nome}! {descricao} agendada para {data} às {hora}. Responda: 1 - Confirmar, 2 - Solicitar remarcação, 3 - Cancelar."
-    },
-    {
-      "id": 3,
-      "chave": "lembrete_sem_resposta",
-      "texto": "Olá, {nome}! Lembrando da nossa mensagem anterior. Por favor, responda para darmos continuidade."
-    },
-    {
-      "id": 4,
-      "chave": "lembrete_consulta",
-      "texto": "Olá, {nome}! Lembrete: {descricao} amanhã, {data} às {hora}."
-    }
-  ],
-  "configuracoes": {
-    "timeoutBotMinutos": 15,
-    "timeoutAtendimentoHumanoMinutos": 30,
-    "horasAteLembreteSemResposta": 24,
-    "horasAteMarcarSemResposta": 48,
-    "horasLembreteAntesConsulta": 24,
-    "primeiroContatoExpira": false
-  }
+  ]
 }
