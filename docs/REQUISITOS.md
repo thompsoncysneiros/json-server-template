@@ -67,7 +67,7 @@ precisar ler toda a conversa.
 
 ### 3.1 Lista de pacientes
 - Ordenação padrão: **não atendidos primeiro**, depois **mais antigos**.
-- Filtros: nome, prontuário, CPF/Cartão SUS, serviço, status, "não
+- Filtros: nome, prontuário, CPF, serviço, status, "não
   atendidos", "solicitou cancelamento", "solicitou remarcação",
   "sem resposta", "aguardando agendamento".
 - Indicador de status do agendamento mais recente:
@@ -139,7 +139,7 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 | Perfis e permissões | Ajustar o que cada nível pode fazer | Admin |
 | Equipes | Equipes e membros | Admin, Supervisão |
 | Serviços | Linhas de cuidado, equipe responsável, modelos de mensagem, prazos e formulário | Admin, Supervisão |
-| Modelos de mensagem | Editar textos do bot, ver status de aprovação na Meta | Admin, Supervisão |
+| Modelos de mensagem | Editar textos e opções numeradas do bot (valem na hora) | Admin, Supervisão |
 | Orientações | Respostas cadastradas que o bot pode dar (item 4.15) | Admin, Supervisão |
 | Formulários de avaliação | Link do formulário por serviço/tipo de consulta | Admin, Supervisão |
 | Horário de atendimento e feriados | Base da mensagem "fora do horário" | Admin, Supervisão |
@@ -215,7 +215,7 @@ Regras:
    no cadastro.
    - Número conhecido → cumprimentar pelo primeiro nome e pedir **validação**
      (data de nascimento) antes de qualquer ação.
-   - Número desconhecido → pedir **CPF (ou Cartão SUS)** + **data de
+   - Número desconhecido → pedir **CPF** + **data de
      nascimento**.
      - Encontrado com outro telefone → perguntar se deseja atualizar o número;
        a troca fica **pendente de validação da equipe** (foto de documento).
@@ -244,9 +244,9 @@ Como podemos ajudar?
 - Fibrilação atrial: por regra da reunião, os contatos vão para a fila da
   **equipe da pesquisa** (pedir a queixa e encaminhar).
 
-> Limitação do WhatsApp: mensagens com **botões** aceitam no máximo 3 opções.
-> Para o menu de 6 opções usar **mensagem de lista** (até 10 itens) ou texto
-> numerado. A confirmação (1/2/3) cabe em botões.
+> Com o Baileys não há botões/listas confiáveis: o menu e todas as escolhas
+> são **opções numeradas**, e o paciente responde com o número (ou a
+> palavra, ex.: "cancelar").
 
 ### 4.2 Paciente que já recebeu mensagem do PROCAPE
 Quando o paciente responde a uma mensagem enviada pela equipe (agendamento,
@@ -259,12 +259,13 @@ O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe
 define dia e hora na plataforma.
 1. Identificar o tipo de teleconsulta / serviço.
 2. Nome completo.
-3. **CPF ou Cartão SUS (CNS)** – qualquer um dos dois; o bot valida os
-   dígitos verificadores antes de buscar.
+3. **CPF** – único identificador aceito; o bot valida os dígitos
+   verificadores antes de buscar. Quem não souber o CPF é encaminhado para a
+   equipe.
 4. Data de nascimento.
 5. Telefone: **confirmar** o número do WhatsApp em uso ("este é o melhor
    número para contato?") em vez de pedir de novo.
-6. Verificar cadastro existente (CPF/Cartão SUS + data de nascimento); se
+6. Verificar cadastro existente (CPF + data de nascimento); se
    não existir, criar o pré-cadastro.
 7. Perguntar, de forma **opcional**, o número do prontuário ("Se você já é
    paciente do PROCAPE e sabe o número do seu prontuário, informe; se não,
@@ -293,7 +294,7 @@ Duas formas de uso, à escolha da equipe no disparo:
 - **B) Disparo sem data** (quando a equipe precisa primeiro do retorno do
   paciente):
   1. Mensagem padrão (1.1) – teleconsulta online, link pelo WhatsApp, exames
-     de sangue dos últimos 3 meses; botões **Quero agendar** · **Falar com a
+     de sangue dos últimos 3 meses; opções **1 Quero agendar** · **2 Falar com a
      equipe**.
   2. Paciente toca em *Quero agendar* → bot pede os **exames** (anexos,
      opcional) e os **dados cadastrais** que faltarem (lista mínima na
@@ -336,9 +337,9 @@ contendo:
 - Orientações (por serviço/tipo, cadastradas em modelos de mensagem).
 - O **link não vai na confirmação**: é enviado em mensagem própria no
   momento definido (4.13).
-- Botões: **Confirmo minha presença · Preciso remarcar · Cancelar**.
+- Opções: **1 Confirmo minha presença · 2 Preciso remarcar · 3 Cancelar**.
 
-O **lembrete** perto da consulta (3.2) repete os botões para quem ainda não
+O **lembrete** perto da consulta (3.2) repete as opções para quem ainda não
 confirmou; para quem já confirmou, é só um lembrete.
 - Confirmar → 🟢 e aparece na agenda.
 - Remarcar → seção 4.7 (🟡).
@@ -473,13 +474,14 @@ peito", "aperto no peito", "falta de ar", "sangramento", "desmaio",
   e o atendimento fica na fila para o próximo expediente.
 - Horário (seg–sex, 8h–17h) e feriados configuráveis por equipe.
 
-### 4.17 Regras do WhatsApp que impactam o fluxo
-- Mensagens iniciadas pelo PROCAPE (primeiro contato, confirmação,
-  lembretes) e qualquer mensagem enviada **mais de 24h após a última
-  mensagem do paciente** precisam ser **modelos (templates) aprovados pela
-  Meta**. Os textos precisam ser definidos cedo para aprovação.
-- Isso vale também para a equipe no chat: passadas 24h, só é possível
-  reabrir a conversa com um template.
+### 4.17 Regras do canal (Baileys) que impactam o fluxo
+- **Sem aprovação de modelos e sem janela de 24h**: qualquer mensagem
+  (inclusive da equipe no chat) pode ser enviada a qualquer momento.
+- **Sem botões**: opções sempre numeradas.
+- **Envio em lote com cadência**: intervalo aleatório entre mensagens (ex.:
+  20–60 s) e limite diário configurável, para reduzir o risco de bloqueio
+  do número. Um disparo de 12 pacientes leva poucos minutos.
+- Mensagens personalizadas (nome, data) – evitar textos idênticos em massa.
 
 ---
 
@@ -508,12 +510,30 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 
 ## 6. Requisitos não funcionais
 - **LGPD**: ver seção 6.1.
-- **Canal WhatsApp**: **API oficial (WhatsApp Business Cloud API)** – APIs
-  não oficiais têm risco de bloqueio do número e não oferecem garantias
-  contratuais. **[DEPENDÊNCIA]** conta Meta Business **em nome do
-  PROCAPE/hospital (CNPJ)** e número **dedicado e institucional** (nunca o
-  celular pessoal de alguém). Para testes, usar o **número de teste gratuito
-  da própria Cloud API**.
+- **Canal WhatsApp: Baileys** (biblioteca Node.js que conecta como
+  "aparelho conectado" do WhatsApp, igual ao WhatsApp Web).
+  - **Vantagens:** sem custo por mensagem, sem aprovação de modelos, sem
+    janela de 24h, implantação imediata.
+  - **Riscos (aceitos):** não é oficial – o número pode ser **bloqueado**
+    pelo WhatsApp (principalmente em envios em massa ou denúncias de spam);
+    atualizações do WhatsApp podem quebrar a conexão até a biblioteca ser
+    atualizada; não há suporte nem contrato com a Meta.
+  - **Mitigações:**
+    - **chip dedicado e institucional** com **WhatsApp Business** (nome e
+      foto do PROCAPE), nunca o número pessoal de alguém;
+    - celular desse chip **sempre ligado e com internet** (o aparelho
+      conectado cai se o celular ficar muitos dias offline);
+    - cadência no envio em lote e limite diário (4.17); uso gradual do número
+      novo nas primeiras semanas;
+    - tela de **status da conexão** em Admin › Integrações (conectado /
+      desconectado, QR code para reconectar) e **alerta** para a Supervisão
+      quando cair;
+    - versão da biblioteca fixada e atualizada de forma controlada;
+    - o bot fala com o WhatsApp através de uma **camada de provedor**: se um
+      dia o número for bloqueado ou o hospital preferir a API oficial, troca-se
+      só essa camada, sem refazer o sistema.
+  - **[DEPENDÊNCIA]** chip/número dedicado e um celular para ele. Para
+    testes: um chip de teste qualquer (sem dados reais).
 - **Hospedagem**: **[DEPENDÊNCIA]** contratação da VPS do hospital/projeto.
   Requisitos mínimos: 2 vCPU, 4 GB de RAM, 80 GB SSD, Ubuntu 24.04 LTS,
   **datacenter no Brasil** (simplifica a LGPD quanto a transferência
@@ -527,7 +547,8 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 |---|---|
 | Base legal | Tutela da saúde (art. 11, II, "f") para o atendimento; não depende de consentimento. O aviso de privacidade informa e registra a ciência |
 | Minimização | Só se coleta o necessário para identificar e atender (seção 10, item 3). Nada de dados clínicos pelo bot além da queixa livre informada pelo paciente |
-| Bot e WhatsApp | Mensagens com **primeiro nome**, data, hora e link; sem CPF, diagnóstico ou resultado de exame. As mensagens passam pelos servidores da Meta, por isso o conteúdo é mínimo |
+| Bot e WhatsApp | Mensagens com **primeiro nome**, data, hora e link; sem CPF, diagnóstico ou resultado de exame. As mensagens passam pela infraestrutura do WhatsApp, por isso o conteúdo é mínimo |
+| Sessão do WhatsApp | Os arquivos de conexão do Baileys equivalem à **senha do número**: ficam criptografados, só na VPS, e só Admin/Supervisão podem reconectar ou desconectar |
 | Acesso | Por nível e equipe (3.9), 2FA para Admin/Supervisão, CPF/telefone mascarados fora do escopo |
 | Rastreabilidade | Auditoria de visualização e alteração de pacientes, guardada por 5 anos |
 | Criptografia | HTTPS em tudo; banco e backups criptografados; credenciais e anexos criptografados |
@@ -536,7 +557,7 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 | Direitos do titular | Pedido de acesso, correção ou exclusão chega pela fila (motivo `direitos_titular`) e é tratado pela Supervisão em até 15 dias; o sistema permite exportar os dados de um paciente e anonimizá-lo |
 | Ambiente de teste | Somente dados fictícios; nunca cópia da produção |
 | Incidentes | Registro de incidentes na auditoria; aviso imediato ao encarregado (DPO) do hospital |
-| Contratos | VPS e Meta atuam como **operadores**; os termos de uso/DPA devem ser aceitos em nome do hospital |
+| Contratos | A VPS atua como **operadora** (contrato/termos em nome do hospital). O uso do Baileys não tem contrato com a Meta – decisão registrada e aceita pelo hospital |
 | Validação | **[DEPENDÊNCIA]** o encarregado (DPO) do hospital revisa o aviso de privacidade e esta tabela antes da produção |
 - **Prazo**: ~20 dias – ~10 de desenvolvimento + ~10 de testes e correções.
 
@@ -573,8 +594,8 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 | Serviços | 3 linhas | + Aconselhamento genético e Outros | Serviços cadastráveis |
 | Prontuário | Pacientes da regulação não têm | Verificar/abrir prontuário antes de agendar | **Definido:** só um número opcional, sem bloqueio |
 | Envio do link | – | Msg 1.1: e-mail/SMS · Msgs 1.3, 2.2, 3.1, 7: WhatsApp | **Adotado:** WhatsApp (mensagem 7) |
-| Disponibilidade (pré-cat.) | Equipe define dia/hora | Msg 1.1 pede "sua disponibilidade" (texto livre) | **Definido:** sem texto livre; data já no disparo ou botão "Quero agendar" → equipe define |
-| Confirmação de presença | 1/2/3 (confirmar/remarcar/cancelar) | 1 Confirmo / 2 Preciso remarcar | **Adotado:** 3 botões, incluindo Cancelar |
+| Disponibilidade (pré-cat.) | Equipe define dia/hora | Msg 1.1 pede "sua disponibilidade" (texto livre) | **Definido:** sem texto livre; data já no disparo ou opção "1 – Quero agendar" → equipe define |
+| Confirmação de presença | 1/2/3 (confirmar/remarcar/cancelar) | 1 Confirmo / 2 Preciso remarcar | **Adotado:** 3 opções numeradas, incluindo Cancelar |
 | Não resposta | 1 lembrete | 2 lembretes e depois equipe | **Adotado:** 2 lembretes (configurável) |
 | Menu | 5 opções | 6 opções (+ Orientações) | **Adotado:** 6 opções (lista) |
 
@@ -604,11 +625,12 @@ Todas são **configuráveis** na área administrativa quando fizer sentido.
 
 | # | Pendência | Decisão | Motivo |
 |---|---|---|---|
-| 1 | Identificador do paciente | **CPF ou Cartão SUS (CNS)**, com validação dos dígitos | Pacientes da regulação têm CNS, nem sempre CPF |
-| 2 | Paciente sem CPF e sem CNS | Entra como **pré-cadastro** (nome, data de nascimento, telefone); a equipe completa depois. Só cadastro "completo" exige um dos dois | Não perder o contato espontâneo sem abrir mão da identificação |
+| 1 | Identificador do paciente | **Somente CPF**, com validação dos dígitos | Decisão da equipe; CPF é o número único de identificação do cidadão (Lei 14.534/2023) |
+| 2 | Paciente ainda sem CPF no cadastro (ex.: lista da regulação traz só Cartão SUS) | Entra como **pré-cadastro**; o bot pede o CPF na primeira interação e completa o cadastro. Cartão SUS fica guardado como dado informativo, mas não serve para identificar | Lista da regulação nem sempre traz CPF |
 | 3 | Dados cadastrais que o bot coleta (pacientes novos) | Mínimo: nome da mãe, CEP, endereço (logradouro, número, bairro), município/UF. **Opcionais:** e-mail, prontuário | Minimização (LGPD): o necessário para identificação e contato |
 | 4 | Aconselhamento genético | Mesmo fluxo geral (confirmação genérica 3.1), equipe própria; serviço fica **inativo** até a equipe cadastrar orientações e formulário | Não depende de desenvolvimento específico |
-| 5 | Aviso LGPD | Aviso de **ciência** (não consentimento), enviado uma vez por número, botão *Entendi* | Base legal de tutela da saúde |
+| 5 | Aviso LGPD | Aviso de **ciência** (não consentimento), enviado uma vez por número, opção *1 – Entendi* | Base legal de tutela da saúde |
+| 5b | Canal WhatsApp | **Baileys**, com as mitigações da seção 6 | Decisão da equipe: sem custo e sem aprovação de modelos |
 | 6 | 2FA | Obrigatório para Admin e Supervisão | Ambos acessam credenciais e todos os pacientes |
 | 7 | Trava de inatividade do bot | 15 min | Conversa curta de triagem |
 | 8 | Trava do atendimento humano | 30 min | Dentro dos 20–30 min da reunião |
@@ -623,8 +645,11 @@ Todas são **configuráveis** na área administrativa quando fizer sentido.
 
 **Dependências externas (não são decisões de sistema):**
 1. Contratar a VPS (Mari / TI).
-2. Criar a conta Meta Business do hospital e o número institucional.
-3. Equipe validar os textos das mensagens e escrever as orientações.
+2. Chip/número institucional dedicado + celular com WhatsApp Business para
+   conectar ao Baileys.
+3. Equipe validar as mensagens – lista exata do que validar em
+   `MENSAGENS.md`, seção 6 (textos ajustados, textos novos e conteúdo das
+   Orientações).
 4. Equipe de enfermagem/médica revisar a mensagem de urgência (U).
 5. Encarregado (DPO) do hospital revisar o aviso de privacidade e a seção 6.1.
 6. Links dos formulários de avaliação por serviço.

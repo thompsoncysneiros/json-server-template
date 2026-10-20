@@ -67,7 +67,7 @@ Agrupamento:
 | Mensagens | `modelos_mensagem`, `comunicacoes`, `campanhas`, `campanha_destinatarios`, `orientacoes`, `formularios` |
 | Conversa | `conversas`, `mensagens`, `anexos` |
 | Trabalho da equipe | `atendimentos_humanos`, `pendencias`, `notificacoes` |
-| Sistema | `horarios_atendimento`, `feriados`, `tarefas_agendadas`, `configuracoes`, `auditoria` |
+| Sistema | `whatsapp_conexao`, `horarios_atendimento`, `feriados`, `tarefas_agendadas`, `configuracoes`, `auditoria` |
 
 ---
 
@@ -153,8 +153,8 @@ várias equipes (define quais filas ele vê).
 | id | uuid PK | |
 | nome_completo | text | |
 | nome_social | text null | |
-| cpf | varchar(11) null unique | só dígitos; pacientes da regulação podem não ter |
-| cartao_sus | varchar(15) null unique | |
+| cpf | varchar(11) null unique | só dígitos; **único identificador**; null apenas em `pre_cadastro` |
+| cartao_sus | varchar(15) null | apenas informativo (vem da lista da regulação); **não** identifica o paciente |
 | data_nascimento | date | validação de identidade |
 | prontuario | text null unique | nº do prontuário do hospital – **opcional**, preenchido só se o paciente tiver; nenhum fluxo depende dele |
 | origem | enum | `regulacao`, `mutirao`, `base_procape`, `contato_espontaneo`, `importacao` |
@@ -165,11 +165,11 @@ várias equipes (define quais filas ele vê).
 | situacao_cadastro | enum | `pre_cadastro`, `completo` |
 | anonimizado_em | timestamptz null | retenção LGPD (5 anos após o último contato) |
 
-Regra: cadastro `completo` exige pelo menos um entre `cpf` e `cartao_sus`
-(check constraint), com dígitos validados; `pre_cadastro` (contato espontâneo
-sem documento) aceita só nome, data de nascimento e telefone.
+Regra: cadastro `completo` exige `cpf` (check constraint), com dígitos
+validados. `pre_cadastro` (ex.: importado da regulação sem CPF) aceita nome,
+data de nascimento e telefone; o bot pede o CPF na primeira interação.
 
-Índices: `cpf`, `cartao_sus`, `prontuario`, `(lower(unaccent(nome_completo)))`
+Índices: `cpf`, `prontuario`, `(lower(unaccent(nome_completo)))`
 com trigram para busca por nome.
 
 ### `paciente_telefones`
@@ -328,8 +328,7 @@ remarcação).
 | servico_id | FK null | modelo específico por serviço (null = geral) |
 | texto | text | com variáveis `{{nome}}`, `{{data}}`, `{{hora}}`, `{{link}}`, `{{orientacoes}}` |
 | botoes | jsonb | ex.: `["Confirmar","Remarcar","Cancelar"]` |
-| template_meta_nome | text null | nome do template aprovado na Meta |
-| template_meta_status | enum | `nao_enviado`, `pendente`, `aprovado`, `rejeitado` |
+| opcoes | jsonb | opções numeradas, ex.: `[{"n":1,"texto":"Confirmo minha presença","acao":"confirmar","palavras":["confirmo","sim"]}]` |
 | ativo | bool | |
 
 ### `comunicacoes` (registro de cada envio que espera ou não resposta)
@@ -398,7 +397,7 @@ nova mensagem depois disso abre nova conversa.
 | expira | bool | false para contato ativo |
 | atendente_id | FK usuarios null | quem assumiu |
 | iniciada_em | timestamptz | |
-| ultima_msg_paciente_em | timestamptz | controla a janela de 24h do WhatsApp |
+| ultima_msg_paciente_em | timestamptz | |
 | ultima_atividade_em | timestamptz | controla as travas |
 | encerrada_em | timestamptz null | |
 | motivo_encerramento | enum null | `timeout_bot`, `timeout_equipe`, `finalizada_equipe`, `fluxo_concluido` |
@@ -424,10 +423,10 @@ stateDiagram-v2
 | direcao | enum | `entrada`, `saida` |
 | autor | enum | `paciente`, `bot`, `usuario` |
 | usuario_id | FK null | atendente que enviou |
-| tipo | enum | `texto`, `botoes`, `lista`, `template`, `imagem`, `documento`, `audio`, `resposta_botao` |
+| tipo | enum | `texto`, `imagem`, `documento`, `audio` |
 | conteudo | text | texto exibido |
-| payload | jsonb | id do botão clicado, variáveis do template etc. |
-| whatsapp_id | text unique | id da Meta (idempotência do webhook) |
+| payload | jsonb | opção escolhida, variáveis usadas no modelo etc. |
+| whatsapp_id | text unique | id da mensagem no WhatsApp (evita processar duas vezes) |
 | status_entrega | enum | `enviada`, `entregue`, `lida`, `falhou` |
 | destaque | bool | "mensagem principal" para o resumo |
 | criada_em | timestamptz | |
@@ -487,6 +486,13 @@ depender da **equipe** ou do **paciente** (mensagem 8.3).
 ---
 
 ## 8. Sistema
+
+### `whatsapp_conexao`
+Estado da conexão do Baileys (um registro por número).
+`id`, `numero`, `status` (`conectado`, `aguardando_qr`, `desconectado`,
+`bloqueado`), `credenciais` (bytea **criptografado** – equivale à senha do
+número), `conectado_em`, `ultimo_evento_em`, `ultimo_erro`.
+Mudanças de status geram notificação para a Supervisão e auditoria.
 
 ### `horarios_atendimento`
 `id`, `equipe_id`, `dia_semana` (0–6), `inicio` (time), `fim` (time).
@@ -551,7 +557,7 @@ Chave/valor (`jsonb`) editável pela coordenação:
 
 ## 10. Pontos em aberto que afetam o banco
 1. Campos de `paciente_dados_cadastrais` que o bot deve coletar.
-2. CPF obrigatório ou Cartão SUS aceito.
+2. ~~CPF ou Cartão SUS~~ – definido: somente CPF.
 3. Integração com o sistema do hospital – se houver no futuro, `prontuario`
    pode ser preenchido automaticamente.
 4. ~~Política de retenção~~ – definida: 5 anos após o último contato →

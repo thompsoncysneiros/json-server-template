@@ -16,12 +16,13 @@ Planejamento – nada implementado ainda. Ver [`REQUISITOS.md`](REQUISITOS.md),
 | Filas e agendamentos | **Redis + BullMQ** | Lembretes, travas de tempo, disparo em lote com limite de envio |
 | Tempo real | **Socket.IO** | Notificar a equipe e atualizar o chat sem recarregar |
 | Front-end | **React + Vite**, TanStack Query, componente de calendário (FullCalendar) | Painel web |
-| WhatsApp | **WhatsApp Business Cloud API (Meta)** | Oficial, sem risco de bloqueio; suporta botões, listas e templates |
+| WhatsApp | **Baileys** (`@whiskeysockets/baileys`, versão fixada) | Decisão da equipe: sem custo e sem aprovação de modelos. Não oficial – riscos e mitigações em `REQUISITOS.md`, seção 6 |
 | Anexos | Armazenamento privado em disco da VPS (ou S3 compatível) | Exames e documentos – nunca públicos |
 | Deploy | **Docker Compose** + Nginx (HTTPS) na VPS | Sobe tudo com um comando; mesmo setup em teste e produção |
 
-Alternativa para o canal: uma camada de **provedor** (seção 4.3) permite
-trocar a Cloud API por outro provedor sem mexer no bot.
+O bot fala com o WhatsApp por uma camada de **provedor**: se o número for
+bloqueado ou o hospital migrar para a API oficial da Meta, troca-se só essa
+camada, sem mexer no bot.
 
 ---
 
@@ -29,11 +30,11 @@ trocar a Cloud API por outro provedor sem mexer no bot.
 
 ```mermaid
 flowchart LR
-    P[Paciente<br/>WhatsApp] <--> M[Meta Cloud API]
-    M -- webhook --> API
-    API -- envio --> M
+    P[Paciente<br/>WhatsApp] <--> M[Servidores<br/>WhatsApp]
+    M <-- conexão persistente --> G
 
     subgraph VPS
+      G[Gateway WhatsApp<br/>Baileys]
       API[API NestJS<br/>+ motor do bot]
       W[Worker<br/>BullMQ]
       DB[(PostgreSQL)]
@@ -46,13 +47,19 @@ flowchart LR
     API <--> R
     W <--> R
     W <--> DB
-    W -- envio --> M
+    G -- mensagens recebidas --> R
+    W -- envios --> G
+    API -- envios do chat --> G
     API <--> F
     E[Equipe<br/>navegador] <--> WEB
     WEB <-- REST + Socket.IO --> API
 ```
 
-- **API**: recebe o webhook do WhatsApp, executa o bot, atende o painel.
+- **Gateway WhatsApp**: processo único que mantém a conexão do Baileys
+  (um número = uma conexão), publica as mensagens recebidas na fila e
+  executa os envios com cadência. Reconecta sozinho; se precisar de QR code,
+  avisa a Supervisão.
+- **API**: consome as mensagens recebidas, executa o bot, atende o painel.
 - **Worker**: processa jobs com hora marcada (lembretes, não resposta,
   encerramento por inatividade) e o disparo em lote. Mesmo código da API,
   outro processo.
@@ -88,7 +95,7 @@ procape-saude-digital/
 │   │       │   ├── atendimentos/     # fila humana
 │   │       │   ├── pendencias/
 │   │       │   ├── notificacoes/     # gateway Socket.IO
-│   │       │   ├── modelos-mensagem/ # textos editáveis, status de aprovação Meta, variáveis
+│   │       │   ├── modelos-mensagem/ # textos editáveis, opções numeradas, variáveis
 │   │       │   ├── comunicacoes/     # registro de envios, lembretes e respostas
 │   │       │   ├── orientacoes/      # respostas cadastradas que o bot pode dar
 │   │       │   ├── formularios/      # formulários de avaliação por serviço
@@ -97,17 +104,18 @@ procape-saude-digital/
 │   │       │   ├── configuracoes/
 │   │       │   └── auditoria/        # interceptor que registra acessos/alterações
 │   │       ├── whatsapp/
-│   │       │   ├── whatsapp.provider.ts      # interface: enviarTexto, enviarBotoes, enviarLista, enviarTemplate, baixarMidia
-│   │       │   ├── meta-cloud.provider.ts    # implementação Cloud API
+│   │       │   ├── whatsapp.provider.ts      # interface: enviarTexto, enviarMidia, baixarMidia, status
+│   │       │   ├── baileys.provider.ts       # implementação Baileys (gateway: conexão, QR, reconexão, cadência)
+│   │       │   ├── sessao-criptografada.ts   # guarda as credenciais do Baileys criptografadas no banco
 │   │       │   ├── fake.provider.ts          # simulador para testes/desenvolvimento
-│   │       │   └── webhook.controller.ts     # verifica assinatura, deduplica por whatsapp_id, enfileira
+│   │       │   └── recebimento.ts            # deduplica por whatsapp_id e enfileira por telefone
 │   │       ├── bot/
 │   │       │   ├── motor.ts                  # carrega conversa → chama etapa → aplica efeitos
 │   │       │   ├── tipos.ts                  # Etapa, Entrada, Resultado, Efeito
-│   │       │   ├── interpretador.ts          # normaliza resposta: número, botão, palavras-chave ("atendente", "cancelar")
+│   │       │   ├── interpretador.ts          # normaliza resposta: número da opção ou palavras-chave ("atendente", "cancelar")
 │   │       │   ├── fluxos/
 │   │       │   │   ├── inicio.ts             # aviso LGPD + identificação pelo número
-│   │       │   │   ├── identificacao.ts      # CPF/Cartão SUS + data de nascimento, troca de telefone
+│   │       │   │   ├── identificacao.ts      # CPF + data de nascimento, troca de telefone
 │   │       │   │   ├── servico.ts            # qual serviço
 │   │       │   │   ├── menu.ts               # 6 opções (lista)
 │   │       │   │   ├── solicitacao.ts        # coleta dados, prontuário opcional, registra pedido p/ equipe
@@ -126,7 +134,7 @@ procape-saude-digital/
 │   │           ├── pos-consulta.job.ts       # agradecimento + formulário após "realizada"
 │   │           ├── lembrete-consulta.job.ts
 │   │           ├── inatividade.job.ts        # encerra conversas (bot X min, equipe 30 min)
-│   │           ├── disparo-campanha.job.ts   # envio em lote respeitando limite da Meta
+│   │           ├── disparo-campanha.job.ts   # envio em lote com intervalo aleatório e limite diário
 │   │           └── retencao-lgpd.job.ts      # diário: apaga anexos (90 dias) e anonimiza (5 anos)
 │   │
 │   └── web/                          # painel React
@@ -148,14 +156,14 @@ procape-saude-digital/
 │                   ├── Perfis/       # matriz de permissões (só Admin)
 │                   ├── Equipes/
 │                   ├── Servicos/
-│                   ├── Mensagens/    # editor com pré-visualização e status Meta
+│                   ├── Mensagens/    # editor com pré-visualização e opções numeradas
 │                   ├── Orientacoes/
 │                   ├── Formularios/
 │                   ├── Horarios/     # expediente e feriados
 │                   ├── Prazos/       # lembretes, link, travas
 │                   ├── Auditoria/
 │                   ├── Relatorios/
-│                   └── Integracoes/  # Admin e Supervisão; credenciais mascaradas
+│                   └── Integracoes/  # status do WhatsApp, QR code, reconectar; Admin e Supervisão
 │
 ├── packages/
 │   └── shared/                       # enums e tipos usados por api e web (status, cores, motivos)
@@ -195,17 +203,16 @@ equipe).
 
 ```mermaid
 sequenceDiagram
-    participant WA as WhatsApp (Meta)
-    participant WH as Webhook
+    participant WA as WhatsApp
+    participant WH as Gateway (Baileys)
     participant Q as Fila (Redis)
     participant B as Motor do bot
     participant DB as PostgreSQL
     participant UI as Painel
 
     WA->>WH: mensagem do paciente
-    WH->>WH: valida assinatura, ignora duplicada
+    WH->>WH: ignora duplicada
     WH->>Q: enfileira (uma fila por telefone = ordem garantida)
-    WH-->>WA: 200 OK imediato
     Q->>B: processa
     B->>DB: salva mensagem, busca conversa aberta
     alt conversa com a equipe
@@ -238,8 +245,8 @@ sequenceDiagram
 - Ação sensível exige `identidade_validada`.
 - O bot nunca envia dados pessoais; mensagens só com primeiro nome, data,
   hora e link.
-- Antes de enviar texto livre, verifica a janela de 24h; fora dela usa
-  template.
+- Toda mensagem com opções termina no formato padrão numerado; o
+  interpretador aceita o número ou as palavras cadastradas para a opção.
 
 ### 4.4 Rotina de "não resposta" (jobs)
 Todo envio que espera resposta gera um registro em `comunicacoes` e um job
@@ -288,7 +295,7 @@ Remarcar ou cancelar **cancela e recria** esses jobs.
 | Fila | `GET /atendimentos?equipe=&status=`, `POST /atendimentos/:id/assumir`, `POST /atendimentos/:id/resolver` |
 | Conversas | `GET /conversas/:id/mensagens`, `POST /conversas/:id/mensagens` (equipe envia), `POST /conversas/:id/encerrar`, `POST /conversas/:id/devolver-ao-bot` |
 | Pendências | `GET /pendencias`, `PATCH /pendencias/:id` |
-| WhatsApp | `GET /webhooks/whatsapp` (verificação Meta), `POST /webhooks/whatsapp` |
+| WhatsApp | `GET /admin/whatsapp/status`, `GET /admin/whatsapp/qr`, `POST /admin/whatsapp/reconectar`, `POST /admin/whatsapp/desconectar` (Admin/Supervisão, auditados) |
 
 Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 `mensagem.nova`, `agendamento.status`, `pendencia.nova`.
@@ -300,7 +307,8 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 - Autorização por perfil e por equipe (atendente só vê as filas das suas
   equipes).
 - Auditoria de visualização e alteração de pacientes.
-- Assinatura do webhook da Meta validada (`X-Hub-Signature-256`).
+- Credenciais da conexão do Baileys criptografadas no banco (equivalem à
+  senha do número); QR code exibido só para Admin/Supervisão.
 - Anexos fora da pasta pública, servidos só para usuário autenticado.
 - Backup diário do PostgreSQL criptografado, fora da VPS, 30 dias de
   retenção, teste de restauração mensal.
@@ -327,13 +335,13 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 
 | Etapa | Dias | Entregas |
 |---|---|---|
-| 0. Preparação | antes | VPS, conta Meta Business + número de teste, textos dos templates enviados para aprovação |
+| 0. Preparação | antes | VPS, chip de teste para o Baileys |
 | 1. Base | 1–3 | Monorepo, Docker Compose, schema e migrações, auth com níveis de acesso, seed fictício |
 | 2. Cadastro e agenda | 3–5 | Pacientes, serviços, agendamentos, lista com cores/filtros, importação |
-| 3. WhatsApp + bot MVP | 5–8 | Webhook, provedor, modelos de mensagem, primeiro contato, confirmação, confirmação de presença, encaminhamento (com fora do horário), fila, chat, notificações |
+| 3. WhatsApp + bot MVP | 5–8 | Gateway Baileys (conexão, QR, reconexão), provedor, modelos de mensagem, primeiro contato, confirmação, confirmação de presença, encaminhamento (com fora do horário), fila, chat, notificações |
 | 4. Jobs | 8–10 | Não resposta (2 lembretes), lembrete da consulta, envio do link, agradecimento/avaliação, travas de tempo, disparo em lote |
 | 5. Testes com a equipe | 11–20 | Testes da Anna, ajustes; em paralelo: identificação completa, menu, orientações, solicitação de agendamento pelo bot, pendência do paciente, linha do tempo, demais telas admin |
 | Depois | – | IA na triagem, relatórios avançados, integração com o sistema do hospital |
 
-**Dependência crítica**: aprovação dos templates pela Meta e verificação da
-conta Business podem levar dias – precisam começar antes do desenvolvimento.
+**Dependência crítica**: a VPS. Com o Baileys não há espera de aprovação da
+Meta; o chip definitivo pode ser conectado no fim dos testes.
