@@ -177,7 +177,7 @@ continuar o atendimento sem depender de um celular específico.
 
 ## 6. Modelo de dados (rascunho)
 
-Implementado como mock em `db/seeds.json` (json-server) com **dados fictícios**.
+Proposta inicial de entidades, a validar antes do desenvolvimento.
 
 - `pacientes` – nome, cpf, cartaoSus, dataNascimento, telefone, prontuario,
   numeroSolicitacao, linhaCuidado, statusCadastro, endereco.
