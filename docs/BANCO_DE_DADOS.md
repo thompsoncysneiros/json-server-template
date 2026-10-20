@@ -94,9 +94,9 @@ Agrupamento:
 | Coluna | Tipo | Observação |
 |---|---|---|
 | id | uuid PK | |
-| codigo | text unique | `admin`, `supervisao`, `atendente`, `equipe_especifica`, `consulta` |
+| codigo | text unique | `admin`, `supervisao`, `atendente`, `equipe_especifica` |
 | nome | text | |
-| nivel | int | 1 (maior) a 5 – Supervisão só gerencia usuários de nível maior que o seu |
+| nivel | int | 1 (maior) a 4 – Supervisão só gerencia usuários de nível maior que o seu |
 | escopo_equipe | bool | true = só vê dados das suas equipes |
 | sistema | bool | perfis padrão não podem ser apagados |
 

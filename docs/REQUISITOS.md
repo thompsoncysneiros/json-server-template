@@ -132,11 +132,11 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 | Regras e prazos | Lembretes, travas de tempo, momento de envio do link | Admin, Supervisão |
 | Agendas / disponibilidade | Horários livres por serviço | Supervisão, Atendente (se liberado) |
 | Auditoria | Quem viu/alterou o quê | Admin, Supervisão |
-| Relatórios | Indicadores (confirmação, não resposta, tempo de fila) | Admin, Supervisão, Consulta |
+| Relatórios | Indicadores (confirmação, não resposta, tempo de fila) | Admin, Supervisão |
 | Integrações (WhatsApp, backups) | Credenciais e configurações técnicas | **Somente Admin** |
 
 ### 3.9 Níveis de acesso
-Cinco níveis (atende o mínimo de 3 a 4 pedido + um técnico). Cada usuário
+Quatro níveis, conforme as funções da equipe. Cada usuário
 tem **um nível** e pertence a **uma ou mais equipes**; o nível define *o que*
 pode fazer e a equipe define *quais filas/pacientes* vê.
 
@@ -146,32 +146,31 @@ pode fazer e a equipe define *quais filas/pacientes* vê.
 | **2. Supervisão** | Coordenação da Saúde Digital (ex.: Mari) | Tudo da operação + área administrativa (exceto integrações), relatórios, auditoria, exportação |
 | **3. Atendente / Enfermagem** | Equipe da Saúde Digital (ex.: Anna) | Operação do dia a dia em todas as filas das suas equipes |
 | **4. Equipe específica** | Pesquisa FA, abertura de prontuário, aconselhamento genético | Só a própria fila, pendências e pacientes vinculados ao seu serviço |
-| **5. Consulta** | Gestores, auditoria interna | Somente leitura: agenda e relatórios, sem dados de contato completos |
 
 Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leitura · ❌ sem acesso):
 
-| Ação | Admin | Supervisão | Atendente | Equipe esp. | Consulta |
-|---|---|---|---|---|---|
-| Ver lista/ficha de pacientes | ✅ | ✅ | 🔸 | 🔸 | ❌ |
-| Ver CPF/telefone completos | ✅ | ✅ | ✅ | 🔸 | ❌ (mascarado) |
-| Cadastrar/editar paciente | ✅ | ✅ | ✅ | 🔸 | ❌ |
-| Importar planilha / disparo em lote | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Criar/remarcar/cancelar agendamento | ✅ | ✅ | ✅ | 🔸 | ❌ |
-| Marcar consulta como realizada | ✅ | ✅ | ✅ | 🔸 | ❌ |
-| Fila de atendimento e chat | ✅ | ✅ | 🔸 | 🔸 | ❌ |
-| Transferir atendimento entre equipes | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Registrar nº de prontuário | ✅ | ✅ | ✅ | 🔸 (prontuário) | ❌ |
-| Validar troca de telefone | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Agenda (calendário) | ✅ | ✅ | ✅ | 🔸 | 👁 |
-| Disponibilidade de horários | ✅ | ✅ | **[PENDENTE]** | ❌ | ❌ |
-| Relatórios | ✅ | ✅ | 👁 básico | ❌ | 👁 |
-| Exportar dados | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Modelos de mensagem, orientações, formulários | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Serviços, prazos, horário de atendimento | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Usuários e equipes | ✅ | ✅ (níveis 3–5) | ❌ | ❌ | ❌ |
-| Perfis e permissões | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Auditoria | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Integrações / credenciais | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Ação | Admin | Supervisão | Atendente | Equipe esp. |
+|---|---|---|---|---|
+| Ver lista/ficha de pacientes | ✅ | ✅ | 🔸 | 🔸 |
+| Ver CPF/telefone completos | ✅ | ✅ | ✅ | 🔸 |
+| Cadastrar/editar paciente | ✅ | ✅ | ✅ | 🔸 |
+| Importar planilha / disparo em lote | ✅ | ✅ | ✅ | ❌ |
+| Criar/remarcar/cancelar agendamento | ✅ | ✅ | ✅ | 🔸 |
+| Marcar consulta como realizada | ✅ | ✅ | ✅ | 🔸 |
+| Fila de atendimento e chat | ✅ | ✅ | 🔸 | 🔸 |
+| Transferir atendimento entre equipes | ✅ | ✅ | ✅ | ❌ |
+| Registrar nº de prontuário | ✅ | ✅ | ✅ | 🔸 (prontuário) |
+| Validar troca de telefone | ✅ | ✅ | ✅ | ❌ |
+| Agenda (calendário) | ✅ | ✅ | ✅ | 🔸 |
+| Disponibilidade de horários | ✅ | ✅ | **[PENDENTE]** | ❌ |
+| Relatórios | ✅ | ✅ | 👁 básico | ❌ |
+| Exportar dados | ✅ | ✅ | ❌ | ❌ |
+| Modelos de mensagem, orientações, formulários | ✅ | ✅ | ❌ | ❌ |
+| Serviços, prazos, horário de atendimento | ✅ | ✅ | ❌ | ❌ |
+| Usuários e equipes | ✅ | ✅ (níveis 3–4) | ❌ | ❌ |
+| Perfis e permissões | ✅ | ❌ | ❌ | ❌ |
+| Auditoria | ✅ | ✅ | ❌ | ❌ |
+| Integrações / credenciais | ✅ | ❌ | ❌ | ❌ |
 
 Regras:
 - Permissões ficam no banco (perfil → lista de permissões), então a matriz
