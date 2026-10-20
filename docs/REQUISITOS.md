@@ -201,6 +201,43 @@ Regras:
   substituir, mas não ler o valor completo. Toda alteração vai para a
   auditoria.
 
+### 3.10 Menus do sistema
+
+**Barra superior (sempre visível):** busca rápida de paciente (nome, CPF,
+prontuário) · 🔔 notificações com contador (novos atendimentos, urgentes,
+teleconsultas sem link, WhatsApp desconectado) · indicador de conexão do
+WhatsApp (🟢/🔴) · menu do usuário (meu perfil, trocar senha, 2FA, sair).
+
+**Menu lateral:**
+
+| # | Menu | Submenus / abas | Conteúdo |
+|---|---|---|---|
+| 1 | 🏠 **Início** | – | Painel do dia: teleconsultas de hoje, **sem link**, atendimentos abertos e urgentes, sem resposta, aguardando agendamento |
+| 2 | 💬 **Atendimentos** | Aguardando · Em atendimento · Resolvidos | Fila da equipe (urgentes no topo, contador no menu). Ao abrir, mostra o **chat** com o paciente e o resumo do atendimento |
+| 3 | 👥 **Pacientes** | Lista · Novo paciente · Importar planilha | Lista com cores e filtros (3.1). **Ficha do paciente** com abas: Dados · Agendamentos (com a área "Link da teleconsulta") · Linha do tempo · Conversas · Pendências · Anexos |
+| 4 | 📅 **Agenda** | Calendário (dia/semana/mês) · Aguardando agendamento · Sem link | Visão das consultas e procedimentos; pedidos de agendamento/remarcação a definir |
+| 5 | 📤 **Disparos** | Novo disparo · Histórico | Envio em lote (ex.: lista semanal do pré-cateterismo), com acompanhamento de quem recebeu/respondeu |
+| 6 | ✅ **Pendências** | Da equipe · Aguardando paciente · Ligar (sem resposta) | Tarefas que travam o atendimento |
+| 7 | 📊 **Relatórios** | Indicadores · Exportar | Confirmações, faltas, não resposta, tempo de atendimento da fila |
+| 8 | ⚙️ **Administração** | Usuários · Equipes · Perfis e permissões · Serviços · Mensagens · Orientações · Formulários · Horários e feriados · Prazos e regras · WhatsApp (conexão/QR) · Auditoria | Área administrativa (3.8) |
+
+**Menus visíveis por nível** (✅ completo · 🔸 só da própria equipe · ❌ não aparece):
+
+| Menu | Admin | Supervisão | Atendente | Equipe específica |
+|---|---|---|---|---|
+| Início | ✅ | ✅ | ✅ | 🔸 |
+| Atendimentos | ✅ | ✅ | 🔸 | 🔸 |
+| Pacientes | ✅ | ✅ | ✅ | 🔸 (sem "Importar") |
+| Agenda | ✅ | ✅ | ✅ | 🔸 |
+| Disparos | ✅ | ✅ | ✅ | ❌ |
+| Pendências | ✅ | ✅ | ✅ | 🔸 |
+| Relatórios | ✅ | ✅ | Só Indicadores (básico) | ❌ |
+| Administração | ✅ (tudo) | ✅ (exceto Perfis e permissões) | ❌ | ❌ |
+
+Na Administração, a Supervisão gerencia apenas usuários de nível 3 e 4
+(3.9). Menus sem permissão **não aparecem** e também são bloqueados no
+servidor.
+
 ---
 
 ## 4. Fluxos do bot
