@@ -112,10 +112,66 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 - **Lista "Aguardando agendamento"**: pacientes que pediram agendamento ou
   remarcação e ainda não têm data (🟣/🟡).
 
-### 3.5 Disparo em lote
-- Importar/cadastrar a lista da semana (substitui a planilha manual).
-- Enviar a mesma mensagem para um grupo de pacientes ("estes 3 para o dia X,
-  estes 3 para o dia Y").
+### 3.5 Importação da planilha e disparo em lote
+
+**Dados cadastrais do paciente** = as colunas da planilha usada hoje pela
+equipe + o **CPF** (coletado pelo bot, pois a planilha não tem). Nada além
+disso é pedido ao paciente (minimização – LGPD).
+
+Menu **Pacientes › Importar planilha** (.xlsx ou .csv):
+1. Enviar o arquivo e escolher o **serviço** da planilha (pré-cateterismo
+   regulação, mutirão, pós-angioplastia…) – cada planilha é de um serviço.
+2. O sistema reconhece as colunas e mostra uma **prévia** linha a linha, com
+   os erros encontrados (data inválida, telefone sem DDD, duplicado).
+3. A equipe confirma; o sistema cria/atualiza os pacientes e agendamentos.
+4. **Nenhuma mensagem é enviada na importação.** Depois, a equipe escolhe em
+   **Disparos** para quem enviar.
+
+| Coluna da planilha | Onde fica no sistema | Regras |
+|---|---|---|
+| **Nome** | Paciente › nome completo | Obrigatório |
+| **Prontuário** | Paciente › prontuário | Opcional; usado para achar duplicados |
+| **Telefone** (1ª coluna) | Telefone principal | Obrigatório; normalizado com DDD (padrão 81 se faltar) |
+| **Telefone** (2ª e 3ª colunas) | Telefones adicionais | Opcionais. O sistema verifica quais têm WhatsApp; se o 1º não tiver, o primeiro que tiver vira o principal |
+| **Data de nascimento** | Paciente › data de nascimento | Obrigatório; usada para validar a identidade no bot |
+| **Data do Procedimento** | Agendamento do tipo **procedimento** (cateterismo/angioplastia, conforme o serviço) | Opcional; usada para **sugerir** a data da teleconsulta (≈7 dias antes) |
+| **Data de telemonitoramento** | Agendamento do tipo **telemonitoramento** | Opcional; ver nota abaixo |
+| **TELECONSULTA** | Agendamento do tipo **teleconsulta** (data e hora) | Se vier só a data, fica 🟣 "aguardando horário" até a equipe completar |
+| **Situação** | Status do agendamento (cor da lista) | Convertida por uma tabela de equivalência editável (abaixo); valor desconhecido vai para Observações |
+| **Observações** | Paciente › observações (uso interno) | Texto livre |
+| *(CPF – não existe na planilha)* | Paciente › CPF | O paciente entra como **pré-cadastro** e o bot pede o CPF na primeira conversa |
+
+Equivalência sugerida da coluna **Situação** (editável em Admin › Prazos e
+regras):
+
+| Texto na planilha (exemplos) | Status no sistema |
+|---|---|
+| Confirmado | 🟢 `confirmado` |
+| Remarcar / Remarcação | 🟡 `remarcacao_solicitada` |
+| Cancelado / Desistiu | 🔴 `cancelado` |
+| Não atende / Sem resposta | 🔵 `sem_resposta` |
+| Realizado / Atendido | `realizado` |
+| Faltou | `faltou` |
+| Vazio | ⚪ `aguardando_confirmacao` |
+
+Regras de duplicidade: o mesmo paciente é reconhecido pelo **prontuário**
+ou, sem ele, por **nome + data de nascimento**. Paciente já existente é
+**atualizado** (campos vazios são preenchidos; campos diferentes aparecem na
+prévia para a equipe decidir).
+
+Também é possível **exportar** a lista de pacientes no mesmo formato da
+planilha, para o período de transição.
+
+**Disparo em lote** (menu Disparos): selecionar pacientes (ex.: os
+importados na semana) e enviar a mesma mensagem para o grupo ("estes 3 para
+o dia X, estes 3 para o dia Y"), com cadência de envio (4.17).
+
+> **[DEPENDÊNCIA]** Confirmar com a equipe: (1) quais textos são usados hoje
+> na coluna *Situação*; (2) o que é o **telemonitoramento** – um contato da
+> equipe (ligação/mensagem) ou uma teleconsulta – para definir se o bot
+> envia mensagem ao paciente nessa data ou só lembra a equipe. Até lá, o
+> plano trata o telemonitoramento como **tarefa da equipe** que aparece na
+> agenda, sem mensagem automática ao paciente.
 
 ### 3.6 Fila de atendimento humano + notificações
 - Itens criados quando o paciente pede a equipe ou quando o bot encaminha
@@ -333,9 +389,8 @@ Duas formas de uso, à escolha da equipe no disparo:
   1. Mensagem padrão (1.1) – teleconsulta online, link pelo WhatsApp, exames
      de sangue dos últimos 3 meses; opções **1 Quero agendar** · **2 Falar com a
      equipe**.
-  2. Paciente toca em *Quero agendar* → bot pede os **exames** (anexos,
-     opcional) e os **dados cadastrais** que faltarem (lista mínima na
-     seção 10, item 3)
+  2. Paciente responde *1 – Quero agendar* → bot pede os **exames**
+     (anexos, opcional) e o **CPF**, se ainda não estiver no cadastro
      → registra a solicitação (🟣) e informa que a equipe enviará data e
      horário.
   3. Equipe define dia e hora na plataforma → confirmação (1.3).
@@ -667,8 +722,8 @@ Confirmar se ainda falta algo. Na especificação de mensagens, a seção 8
 ## 9. Ações combinadas
 - **Thompson**: tentar novamente o cadastro da VPS; planejamento técnico.
 - **Anna**: acompanhar a Mari sobre a VPS (ou via TI); revisar os
-  decisões da seção 10; enviar os textos padrão das mensagens e a
-  lista de dados cadastrais que o bot deve coletar dos pacientes novos.
+  decisões da seção 10; confirmar os valores da coluna *Situação* e o que
+  é o telemonitoramento (3.5).
 - Verificar se ainda há acesso ao site feito anteriormente pela Flávia.
 
 ---
@@ -682,7 +737,7 @@ Todas são **configuráveis** na área administrativa quando fizer sentido.
 |---|---|---|---|
 | 1 | Identificador do paciente | **Somente CPF**, com validação dos dígitos | Decisão da equipe; CPF é o número único de identificação do cidadão (Lei 14.534/2023) |
 | 2 | Paciente ainda sem CPF no cadastro (ex.: lista da regulação traz só Cartão SUS) | Entra como **pré-cadastro**; o bot pede o CPF na primeira interação e completa o cadastro. Cartão SUS fica guardado como dado informativo, mas não serve para identificar | Lista da regulação nem sempre traz CPF |
-| 3 | Dados cadastrais que o bot coleta (pacientes novos) | Mínimo: nome da mãe, CEP, endereço (logradouro, número, bairro), município/UF. **Opcionais:** e-mail, prontuário | Minimização (LGPD): o necessário para identificação e contato |
+| 3 | Dados cadastrais | **Os da planilha da equipe** (nome, prontuário, até 3 telefones, data de nascimento, observações) **+ CPF**. Sem endereço, nome da mãe ou e-mail | Definido pela equipe; atende à minimização (LGPD) |
 | 4 | Aconselhamento genético | Mesmo fluxo geral (confirmação genérica 3.1), equipe própria; serviço fica **inativo** até a equipe cadastrar orientações e formulário | Não depende de desenvolvimento específico |
 | 5 | Aviso LGPD | Aviso de **ciência** (não consentimento), enviado uma vez por número, opção *1 – Entendi* | Base legal de tutela da saúde |
 | 5b | Canal WhatsApp | **Baileys**, com as mitigações da seção 6 | Decisão da equipe: sem custo e sem aprovação de modelos |

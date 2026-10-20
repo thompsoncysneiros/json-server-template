@@ -28,8 +28,8 @@ erDiagram
 
     pacientes ||--o{ paciente_telefones : ""
     pacientes ||--o{ paciente_servicos : ""
+    importacoes ||--o{ pacientes : "origem"
     servicos  ||--o{ paciente_servicos : ""
-    pacientes ||--o| paciente_dados_cadastrais : ""
     pacientes ||--o{ consentimentos : ""
 
     pacientes ||--o{ agendamentos : ""
@@ -62,7 +62,7 @@ Agrupamento:
 | Grupo | Tabelas |
 |---|---|
 | Acesso | `perfis`, `permissoes`, `perfil_permissoes`, `usuarios`, `equipes`, `usuario_equipes` |
-| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `paciente_dados_cadastrais`, `consentimentos` |
+| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `consentimentos`, `importacoes` |
 | Agenda | `agendamentos`, `agendamento_eventos` |
 | Mensagens | `modelos_mensagem`, `comunicacoes`, `campanhas`, `campanha_destinatarios`, `orientacoes`, `formularios` |
 | Conversa | `conversas`, `mensagens`, `anexos` |
@@ -159,7 +159,8 @@ várias equipes (define quais filas ele vê).
 | prontuario | text null unique | nº do prontuário do hospital – **opcional**, preenchido só se o paciente tiver; nenhum fluxo depende dele |
 | origem | enum | `regulacao`, `mutirao`, `base_procape`, `contato_espontaneo`, `importacao` |
 | numero_solicitacao | text null | nº da regulação |
-| observacoes | text | uso interno da equipe |
+| observacoes | text | uso interno da equipe (coluna *Observações* da planilha) |
+| importacao_id | FK importacoes null | planilha de origem |
 | excluido_em | timestamptz null | exclusão lógica |
 
 | situacao_cadastro | enum | `pre_cadastro`, `completo` |
@@ -200,22 +201,21 @@ cuida de dois pacientes) → o bot pergunta de quem se trata.
 Permite saber, quando o paciente escreve, em que serviço ele está ativo e
 sugerir no menu.
 
-### `paciente_dados_cadastrais`
-Dados complementares coletados pelo bot ou pela equipe. Não bloqueiam
-nenhum fluxo. Lista mínima (minimização LGPD): nome da mãe, CEP, endereço,
-município/UF; e-mail opcional.
+### `importacoes`
+Registro de cada planilha importada (menu Pacientes › Importar planilha).
 | Coluna | Tipo | Observação |
 |---|---|---|
-| paciente_id | PK/FK | |
-| nome_mae | text | |
-| endereco_logradouro, numero, complemento, bairro | text | |
-| cep | varchar(8) | |
-| municipio, uf | text | |
-| email | text null | |
-| dados_extras | jsonb | campos que a equipe venha a pedir sem mudar o banco |
-| coletado_por | enum `bot`/`usuario` | |
-| coletado_em | timestamptz | |
-| conferido_por / conferido_em | FK usuarios / timestamptz | |
+| id | uuid PK | |
+| arquivo_nome | text | nome original |
+| servico_id | FK | serviço escolhido na importação |
+| usuario_id | FK | quem importou |
+| total_linhas, criados, atualizados, ignorados | int | resumo |
+| erros | jsonb | linha → motivo (data inválida, telefone sem DDD…) |
+| mapeamento | jsonb | coluna da planilha → campo do sistema usado |
+| criado_em | timestamptz | |
+
+O arquivo em si **não é guardado** depois de processado (minimização).
+Pacientes e agendamentos criados guardam `importacao_id` para rastreio.
 
 ### `consentimentos`
 Registro da **ciência** do aviso de privacidade (não é consentimento – a
@@ -237,7 +237,7 @@ visão em calendário dos próprios `agendamentos`.
 | id | uuid PK | |
 | paciente_id | FK | |
 | servico_id | FK | |
-| tipo | enum `tipo_agendamento` | `teleconsulta`, `procedimento`, `consulta_presencial` |
+| tipo | enum `tipo_agendamento` | `teleconsulta`, `procedimento`, `telemonitoramento`, `consulta_presencial` |
 | descricao | text | ex.: "Cateterismo", "Teleconsulta de acompanhamento" |
 | data_hora | timestamptz null | null enquanto `solicitado` |
 | duracao_min | int | |
@@ -523,6 +523,8 @@ Chave/valor (`jsonb`) editável pela coordenação:
 | `nao_resposta.horas_apos_ultimo_lembrete` | 24 (então encaminha para a equipe) |
 | `nao_resposta.acao_final` | `sinalizar` (nunca cancela automaticamente) |
 | `nao_resposta.horas_destaque_antes_consulta` | 48 |
+| `importacao.ddd_padrao` | 81 |
+| `importacao.equivalencia_situacao` | `{"confirmado":"confirmado","remarcar":"remarcacao_solicitada","cancelado":"cancelado","nao atende":"sem_resposta","realizado":"realizado","faltou":"faltou"}` |
 | `lembrete_consulta.horas_antes` | 24 (padrão; o serviço pode sobrescrever) |
 | `link.minutos_antes` | 10 (padrão; o serviço pode sobrescrever) |
 | `avaliacao.horas_apos_realizada` | 0 (imediato) |
@@ -558,7 +560,9 @@ Chave/valor (`jsonb`) editável pela coordenação:
 ---
 
 ## 10. Pontos em aberto que afetam o banco
-1. Campos de `paciente_dados_cadastrais` que o bot deve coletar.
+1. ~~Dados cadastrais~~ – definido: colunas da planilha + CPF.
+   Pendente com a equipe: valores da coluna *Situação* e o significado do
+   telemonitoramento (`REQUISITOS.md` 3.5).
 2. ~~CPF ou Cartão SUS~~ – definido: somente CPF.
 3. Integração com o sistema do hospital – se houver no futuro, `prontuario`
    pode ser preenchido automaticamente.

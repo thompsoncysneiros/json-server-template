@@ -112,8 +112,8 @@ Você foi regulado(a) para realizar um *cateterismo* e, antes do exame, é neces
 ```
 Assinatura: `Equipe de Saúde Digital – PROCAPE`
 Opções: **Quero agendar** · **Falar com a equipe**
-- *Quero agendar* → bot pede os exames (opcional) e dados cadastrais que
-  faltarem → mensagem **S**.
+- *Quero agendar* → bot pede os exames (opcional) e o CPF, se ainda não
+  estiver no cadastro → mensagem **S**.
 - Usada só quando a equipe dispara **sem data**. Se o disparo já tiver data
   e hora, o paciente recebe direto a 1.3.
 
@@ -139,7 +139,7 @@ envia direto a 2.2.
 Recebemos sua solicitação, {{nome}}! ✅
 🫀 Nossa equipe vai definir a data e o horário da sua teleconsulta de {{tipo_teleconsulta}} e enviará por aqui, neste WhatsApp.
 ```
-Antes dela, se for paciente novo, o bot coleta os dados que faltarem e
+Antes dela, se for paciente novo, o bot pede nome, data de nascimento e CPF (dados da planilha) e
 pergunta o prontuário de forma **opcional** ("Se souber o número do seu
 prontuário no PROCAPE, informe; se não, responda *0*").
 Registra a solicitação (🟣 `solicitado`) e a pendência "agendar" para a
