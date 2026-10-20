@@ -73,7 +73,8 @@ Variáveis: `{{nome}}`, `{{tipo_teleconsulta}}`, `{{data}}`,
 | 11 | `geral.encaminhado_equipe` | Todos | Falar com a equipe / encaminhamento | Sessão | – |
 | 12 | `geral.nao_entendido` | Todos | Resposta não reconhecida | Sessão (lista) | Menu de 6 opções |
 | M | `geral.menu` | Todos | Paciente inicia conversa | Sessão (lista) | Menu de 6 opções |
-| A | `geral.aviso_privacidade` | Todos | Primeiro contato do número | Sessão | Concordo · Falar com a equipe |
+| A | `geral.aviso_privacidade` | Todos | Primeiro contato do número | Sessão | Entendi |
+| U | `geral.alerta_urgencia` | Todos | Palavra de alerta, em qualquer etapa | Sessão | – (atendimento urgente) |
 
 
 ---
@@ -416,12 +417,26 @@ nome.
 
 ### A `geral.aviso_privacidade` – Sessão
 ```
-🔒 Para seu atendimento, o PROCAPE vai registrar as informações desta conversa, com sigilo e de acordo com a Lei Geral de Proteção de Dados (LGPD).
-Seus dados serão usados somente para o seu acompanhamento.
+🔒 Aviso de privacidade
+Para realizar seu atendimento, o PROCAPE registra as informações desta conversa, com sigilo e de acordo com a Lei Geral de Proteção de Dados (LGPD).
+Seus dados são usados somente para o seu acompanhamento e não são compartilhados para outras finalidades.
+Você pode pedir acesso, correção ou exclusão dos seus dados a qualquer momento escrevendo "meus dados".
 ```
-Botões: **Concordo** · **Falar com a equipe**. Enviada uma vez por número
-(registro em `consentimentos`). **[PENDENTE]** validação do texto pelo
-jurídico/DPO do hospital.
+Botão: **Entendi**. É um aviso de **ciência**: o atendimento não depende
+de aceite (base legal: tutela da saúde, LGPD art. 11, II, "f"). Enviada uma
+vez por número (registro em `consentimentos`). Revisão do encarregado (DPO)
+do hospital antes da produção.
+
+### U `geral.alerta_urgencia` – Sessão (prioritária)
+Disparada por palavra de alerta em qualquer etapa e horário.
+```
+⚠️ {{nome}}, se você está com *dor ou aperto no peito, falta de ar, desmaio ou sangramento intenso*, procure *imediatamente* a emergência mais próxima ou ligue *192 (SAMU)*.
+
+🫀 Sua mensagem também foi encaminhada com prioridade para nossa equipe.
+```
+Abre atendimento com prioridade **urgente** e motivo `urgencia`. O bot não
+faz avaliação clínica. Texto a ser revisado pela equipe de
+enfermagem/médica.
 
 ---
 

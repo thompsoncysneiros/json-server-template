@@ -162,8 +162,12 @@ várias equipes (define quais filas ele vê).
 | observacoes | text | uso interno da equipe |
 | excluido_em | timestamptz null | exclusão lógica |
 
-Regra: pelo menos um entre `cpf` e `cartao_sus` (check constraint) –
-**[PENDENTE]** confirmar se paciente totalmente novo pode entrar sem nenhum.
+| situacao_cadastro | enum | `pre_cadastro`, `completo` |
+| anonimizado_em | timestamptz null | retenção LGPD (5 anos após o último contato) |
+
+Regra: cadastro `completo` exige pelo menos um entre `cpf` e `cartao_sus`
+(check constraint), com dígitos validados; `pre_cadastro` (contato espontâneo
+sem documento) aceita só nome, data de nascimento e telefone.
 
 Índices: `cpf`, `cartao_sus`, `prontuario`, `(lower(unaccent(nome_completo)))`
 com trigram para busca por nome.
@@ -197,13 +201,13 @@ Permite saber, quando o paciente escreve, em que serviço ele está ativo e
 sugerir no menu.
 
 ### `paciente_dados_cadastrais`
-Dados complementares coletados pelo bot ou pela equipe, todos opcionais
-(**[PENDENTE]** lista final). Não bloqueiam nenhum fluxo.
+Dados complementares coletados pelo bot ou pela equipe. Não bloqueiam
+nenhum fluxo. Lista mínima (minimização LGPD): nome da mãe, CEP, endereço,
+município/UF; e-mail opcional.
 | Coluna | Tipo | Observação |
 |---|---|---|
 | paciente_id | PK/FK | |
 | nome_mae | text | |
-| sexo | text | |
 | endereco_logradouro, numero, complemento, bairro | text | |
 | cep | varchar(8) | |
 | municipio, uf | text | |
@@ -214,8 +218,10 @@ Dados complementares coletados pelo bot ou pela equipe, todos opcionais
 | conferido_por / conferido_em | FK usuarios / timestamptz | |
 
 ### `consentimentos`
+Registro da **ciência** do aviso de privacidade (não é consentimento – a
+base legal é a tutela da saúde).
 `id`, `paciente_id` (null se ainda não identificado), `telefone`, `tipo`
-(`aviso_privacidade`), `versao_texto`, `aceito` (bool), `registrado_em`.
+(`aviso_privacidade`), `versao_texto`, `ciente_em`.
 
 ---
 
@@ -443,7 +449,7 @@ stateDiagram-v2
 | paciente_id | FK null | |
 | equipe_id | FK | fila de destino (pelo serviço) |
 | agendamento_id | FK null | ex.: remarcação |
-| motivo | enum `motivo_encaminhamento` | `paciente_solicitou`, `remarcacao`, `nao_entendido`, `fora_do_fluxo`, `decisao_equipe`, `problema_agendamento`, `inconsistencia_dados`, `queixa_clinica`, `impossibilitado` (não pode realizar a consulta), `sem_resposta`, `orientacao_inexistente` |
+| motivo | enum `motivo_encaminhamento` | `paciente_solicitou`, `remarcacao`, `nao_entendido`, `fora_do_fluxo`, `decisao_equipe`, `problema_agendamento`, `inconsistencia_dados`, `queixa_clinica`, `urgencia` (palavra de alerta), `direitos_titular` (pedido LGPD), `impossibilitado` (não pode realizar a consulta), `sem_resposta`, `orientacao_inexistente` |
 | origem | enum | `paciente`, `bot_automatico` |
 | queixa | text | o que o paciente relatou |
 | prioridade | enum | `urgente`, `alta`, `normal`, `baixa` |
@@ -502,17 +508,23 @@ nada se perca se o servidor reiniciar.
 Chave/valor (`jsonb`) editável pela coordenação:
 | Chave | Valor inicial |
 |---|---|
-| `bot.timeout_inatividade_min` | 15 (**[PENDENTE]**) |
+| `bot.timeout_inatividade_min` | 15 |
 | `equipe.timeout_inatividade_min` | 30 |
 | `nao_resposta.horas_entre_lembretes` | 24 |
 | `nao_resposta.quantidade_lembretes` | 2 |
 | `nao_resposta.horas_apos_ultimo_lembrete` | 24 (então encaminha para a equipe) |
-| `nao_resposta.acao_final` | `sinalizar` (**[PENDENTE]**) |
+| `nao_resposta.acao_final` | `sinalizar` (nunca cancela automaticamente) |
+| `nao_resposta.horas_destaque_antes_consulta` | 48 |
 | `lembrete_consulta.horas_antes` | 24 (padrão; o serviço pode sobrescrever) |
 | `link.minutos_antes` | 10 (padrão; o serviço pode sobrescrever) |
 | `avaliacao.horas_apos_realizada` | 0 (imediato) |
 | `bot.max_tentativas_nao_entendidas` | 2 |
-| `bot.palavras_urgencia` | `["dor no peito","sangramento","falta de ar"]` (**[PENDENTE]**) |
+| `bot.palavras_urgencia` | `["dor no peito","aperto no peito","falta de ar","sangramento","desmaio","desmaiei","palpitação","infarto"]` |
+| `seguranca.sessao_inatividade_min` | 30 |
+| `seguranca.tentativas_login` | 5 (bloqueio de 15 min) |
+| `lgpd.retencao_anos_apos_ultimo_contato` | 5 |
+| `lgpd.dias_manter_anexos_apos_consulta` | 90 |
+| `auditoria.retencao_anos` | 5 |
 
 ### `auditoria`
 `id`, `usuario_id`, `acao` (`visualizou_paciente`, `alterou`, `exportou`,
@@ -542,4 +554,5 @@ Chave/valor (`jsonb`) editável pela coordenação:
 2. CPF obrigatório ou Cartão SUS aceito.
 3. Integração com o sistema do hospital – se houver no futuro, `prontuario`
    pode ser preenchido automaticamente.
-4. Política de retenção (por quanto tempo guardar conversas e anexos).
+4. ~~Política de retenção~~ – definida: 5 anos após o último contato →
+   anonimização; anexos apagados 90 dias após a consulta (job diário).

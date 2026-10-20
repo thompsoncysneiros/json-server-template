@@ -3,7 +3,9 @@
 Levantamento de requisitos a partir da reunião entre Thompson Cysneiros e
 Anna Beatriz Mariz Dias, complementado pela especificação funcional do bot
 enviada depois. Este documento é a referência para o desenvolvimento; itens
-marcados com **[PENDENTE]** ainda precisam de decisão.
+marcados com **[DEPENDÊNCIA]** não são decisões de sistema: dependem de
+ação externa (contratação, textos da equipe, validação jurídica). As
+decisões técnicas tomadas para fechar as pendências estão na seção 10.
 
 Documentos relacionados:
 - [`BANCO_DE_DADOS.md`](BANCO_DE_DADOS.md) – estrutura proposta do banco.
@@ -40,7 +42,7 @@ precisar ler toda a conversa.
 | **Pré-cateterismo – Mutirão** | Lista de mutirão | Mesmos da regulação | Saúde Digital |
 | **Pós-angioplastia** | Já são pacientes do PROCAPE | Dados completos + prontuário | Saúde Digital |
 | **Fibrilação atrial** | Pacientes em acompanhamento (pesquisa) | Dados completos + prontuário | Pesquisa FA |
-| **Aconselhamento genético** | **[PENDENTE]** origem e dados | – | **[PENDENTE]** |
+| **Aconselhamento genético** | Contato espontâneo ou cadastro pela equipe | Mesmos da regra geral | Aconselhamento genético |
 | **Outros** | Contato espontâneo | – | Saúde Digital (triagem) |
 
 - A lista de serviços deve ser **cadastrável** na plataforma (não fixa no
@@ -189,8 +191,11 @@ Regras:
   API (não basta esconder o botão).
 - Toda ação em área restrita e toda visualização de paciente vai para a
   auditoria.
-- Senha forte e expiração de sessão; **[PENDENTE]** exigir 2FA para Admin e
-  Supervisão (recomendado, já que ambos acessam credenciais).
+- Senha forte (mín. 10 caracteres), bloqueio após 5 tentativas erradas por
+  15 min e sessão expirada após 30 min sem uso.
+- **2FA obrigatório para Admin e Supervisão** (aplicativo autenticador,
+  ex.: Google Authenticator), já que ambos acessam credenciais e dados de
+  todos os pacientes. Opcional para os demais níveis.
 - Credenciais (token do WhatsApp etc.) ficam **criptografadas** no banco e,
   depois de salvas, aparecem **mascaradas** na tela (`••••1234`): é possível
   substituir, mas não ler o valor completo. Toda alteração vai para a
@@ -201,8 +206,11 @@ Regras:
 ## 4. Fluxos do bot
 
 ### 4.1 Início da conversa (paciente envia mensagem)
-1. **Consentimento/aviso LGPD** no primeiro contato do número
-   (**[PENDENTE]** texto).
+1. **Aviso de privacidade (LGPD)** no primeiro contato do número (mensagem
+   A de `MENSAGENS.md`). É um aviso de **ciência**, não um pedido de
+   consentimento: o tratamento de dados de saúde para o atendimento tem base
+   legal na tutela da saúde (LGPD, art. 11, II, "f"), então o atendimento
+   não depende de o paciente "aceitar".
 2. **Identificar o paciente quando possível**: procurar o número do WhatsApp
    no cadastro.
    - Número conhecido → cumprimentar pelo primeiro nome e pedir **validação**
@@ -251,8 +259,8 @@ O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe
 define dia e hora na plataforma.
 1. Identificar o tipo de teleconsulta / serviço.
 2. Nome completo.
-3. CPF ou outro identificador definido pela equipe (**[PENDENTE]**: aceitar
-   Cartão SUS como alternativa).
+3. **CPF ou Cartão SUS (CNS)** – qualquer um dos dois; o bot valida os
+   dígitos verificadores antes de buscar.
 4. Data de nascimento.
 5. Telefone: **confirmar** o número do WhatsApp em uso ("este é o melhor
    número para contato?") em vez de pedir de novo.
@@ -288,7 +296,8 @@ Duas formas de uso, à escolha da equipe no disparo:
      de sangue dos últimos 3 meses; botões **Quero agendar** · **Falar com a
      equipe**.
   2. Paciente toca em *Quero agendar* → bot pede os **exames** (anexos,
-     opcional) e os **dados cadastrais** que faltarem (**[PENDENTE]** lista)
+     opcional) e os **dados cadastrais** que faltarem (lista mínima na
+     seção 10, item 3)
      → registra a solicitação (🟣) e informa que a equipe enviará data e
      horário.
   3. Equipe define dia e hora na plataforma → confirmação (1.3).
@@ -367,7 +376,7 @@ Fluxo: primeiro contato → aguarda → **lembrete 1** → aguarda →
 | +24h sem resposta | Lembrete 1 |
 | +24h sem resposta | Lembrete 2 |
 | +24h sem resposta | Status **sem resposta** (🔵), pendência "ligar para o paciente" e notificação para a equipe – separado da fila de urgência |
-| Depois | Aplicar a regra da Saúde Digital (**[PENDENTE]**: cancelar automaticamente? liberar o horário? quantos dias antes da consulta?) |
+| Depois | **O sistema não cancela automaticamente.** O agendamento fica 🔵 e a equipe decide (ligar, remarcar ou cancelar). Se faltarem **menos de 48h** para a consulta e ela continuar sem confirmação, o paciente sobe para o topo da lista com destaque |
 
 O sistema registra: data do primeiro contato, data de cada lembrete, se
 houve resposta (e quando), status do paciente e necessidade de intervenção
@@ -401,21 +410,30 @@ Encaminhamento **automático** quando:
 
 Cada encaminhamento registra o **motivo** (lista fixa) para relatórios.
 
-**[PENDENTE]** Palavras de alerta (ex.: "dor no peito", "sangramento",
-"falta de ar") devem gerar prioridade **urgente** e uma resposta padrão
-orientando a procurar emergência? Requer validação clínica.
+**Palavras de alerta** (lista editável em Admin › Prazos; inicial: "dor no
+peito", "aperto no peito", "falta de ar", "sangramento", "desmaio",
+"desmaiei", "palpitação", "infarto"):
+- O bot envia **na hora** a mensagem de orientação de emergência (mensagem U
+  de `MENSAGENS.md`: procurar a emergência mais próxima ou ligar 192 – SAMU),
+  independentemente da etapa ou do horário;
+- abre atendimento com prioridade **urgente** e notifica a equipe;
+- o bot **não faz avaliação clínica** – apenas orienta a procurar socorro.
+  A equipe pode ajustar as palavras; o texto da mensagem deve ser revisado
+  pela equipe de enfermagem/médica antes de entrar em produção.
 
 ### 4.11 Travas de tempo
 | Trava | Regra |
 |---|---|
-| Inatividade com o bot | Paciente parado por X min → bot encerra a conversa. **[PENDENTE]** X (sugestão: 15 min) |
-| Atendimento humano | Assim que a equipe fala, o bot para. Após 20–30 min sem movimentação, a conversa é encerrada |
+| Inatividade com o bot | Paciente parado por **15 min** → bot encerra a conversa (configurável) |
+| Atendimento humano | Assim que a equipe fala, o bot para. Após **30 min** sem movimentação, a conversa é encerrada (configurável) |
 | Retorno | Após encerramento, o paciente passa de novo pela verificação |
 | Exceção | Mensagens ativas (primeiro contato/agendamento) **não** expiram |
 
 ### 4.12 Lembretes
-- Lembrete antes da consulta/procedimento (**[PENDENTE]** antecedência,
-  sugestão 24h) com a confirmação de presença.
+- Lembrete **24h antes** da consulta/procedimento (configurável por
+  serviço), com a confirmação de presença para quem ainda não confirmou.
+- Se o agendamento for criado com menos de 24h de antecedência, o lembrete
+  não é enviado (a própria confirmação já cumpre esse papel).
 
 ### 4.13 Link da teleconsulta
 - Enviado **automaticamente** no momento definido pela equipe (mensagem 7).
@@ -489,15 +507,37 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 ---
 
 ## 6. Requisitos não funcionais
-- **LGPD**: dados de saúde são sensíveis; aviso/consentimento; o bot não
-  expõe dados; acesso por login; auditoria; anexos em armazenamento privado;
-  política de retenção (**[PENDENTE]**).
-- **Canal WhatsApp**: recomendada a **API oficial (WhatsApp Business Cloud
-  API)** – APIs não oficiais têm risco de bloqueio do número.
-  **[PENDENTE]** conta Meta Business do PROCAPE e número dedicado.
-- **Hospedagem**: VPS do hospital/projeto (**[PENDENTE]** contratação).
-  Plano B para testes: VPS da empresa do Thompson **apenas com dados
-  fictícios** e número de WhatsApp de teste.
+- **LGPD**: ver seção 6.1.
+- **Canal WhatsApp**: **API oficial (WhatsApp Business Cloud API)** – APIs
+  não oficiais têm risco de bloqueio do número e não oferecem garantias
+  contratuais. **[DEPENDÊNCIA]** conta Meta Business **em nome do
+  PROCAPE/hospital (CNPJ)** e número **dedicado e institucional** (nunca o
+  celular pessoal de alguém). Para testes, usar o **número de teste gratuito
+  da própria Cloud API**.
+- **Hospedagem**: **[DEPENDÊNCIA]** contratação da VPS do hospital/projeto.
+  Requisitos mínimos: 2 vCPU, 4 GB de RAM, 80 GB SSD, Ubuntu 24.04 LTS,
+  **datacenter no Brasil** (simplifica a LGPD quanto a transferência
+  internacional), IP fixo e domínio com HTTPS. Plano B para testes: VPS da
+  empresa do Thompson **apenas com dados fictícios** e número de teste.
+- **Backups**: diários, criptografados, guardados fora da VPS, retenção de
+  30 dias; teste de restauração mensal.
+
+### 6.1 LGPD – decisões
+| Tema | Decisão |
+|---|---|
+| Base legal | Tutela da saúde (art. 11, II, "f") para o atendimento; não depende de consentimento. O aviso de privacidade informa e registra a ciência |
+| Minimização | Só se coleta o necessário para identificar e atender (seção 10, item 3). Nada de dados clínicos pelo bot além da queixa livre informada pelo paciente |
+| Bot e WhatsApp | Mensagens com **primeiro nome**, data, hora e link; sem CPF, diagnóstico ou resultado de exame. As mensagens passam pelos servidores da Meta, por isso o conteúdo é mínimo |
+| Acesso | Por nível e equipe (3.9), 2FA para Admin/Supervisão, CPF/telefone mascarados fora do escopo |
+| Rastreabilidade | Auditoria de visualização e alteração de pacientes, guardada por 5 anos |
+| Criptografia | HTTPS em tudo; banco e backups criptografados; credenciais e anexos criptografados |
+| Anexos (exames, documentos) | Armazenamento privado. Exames devem ser **incorporados ao prontuário oficial** pela equipe; no sistema, são apagados **90 dias após a consulta realizada** |
+| Retenção | Conversas e cadastro: enquanto o paciente estiver em acompanhamento + **5 anos** após o último contato; depois, **anonimização** (mantém só números para relatórios). O sistema **não é o prontuário oficial** – o que for clínico vai para o prontuário do hospital |
+| Direitos do titular | Pedido de acesso, correção ou exclusão chega pela fila (motivo `direitos_titular`) e é tratado pela Supervisão em até 15 dias; o sistema permite exportar os dados de um paciente e anonimizá-lo |
+| Ambiente de teste | Somente dados fictícios; nunca cópia da produção |
+| Incidentes | Registro de incidentes na auditoria; aviso imediato ao encarregado (DPO) do hospital |
+| Contratos | VPS e Meta atuam como **operadores**; os termos de uso/DPA devem ser aceitos em nome do hospital |
+| Validação | **[DEPENDÊNCIA]** o encarregado (DPO) do hospital revisa o aviso de privacidade e esta tabela antes da produção |
 - **Prazo**: ~20 dias – ~10 de desenvolvimento + ~10 de testes e correções.
 
 ---
@@ -529,7 +569,7 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 | Cancelamento | Opções na própria mensagem, sem perguntar qual consulta | Confirmar qual consulta | Automático quando vier da mensagem; perguntar só se vier do menu com 2+ consultas |
 | Agendamento | Equipe define dia e hora | Bot verifica agenda e oferece opções | **Definido:** equipe define dia e hora (sem autoagendamento) |
 | Telefone | Já é o número do WhatsApp | Solicitar telefone | Confirmar o número em uso |
-| Não resposta | Marcar azul no 3º dia | Aguardando confirmação + regra da Saúde Digital | Azul + regra configurável (**[PENDENTE]**) |
+| Não resposta | Marcar azul no 3º dia | Aguardando confirmação + regra da Saúde Digital | **Definido:** azul, sem cancelamento automático; destaque se faltar < 48h |
 | Serviços | 3 linhas | + Aconselhamento genético e Outros | Serviços cadastráveis |
 | Prontuário | Pacientes da regulação não têm | Verificar/abrir prontuário antes de agendar | **Definido:** só um número opcional, sem bloqueio |
 | Envio do link | – | Msg 1.1: e-mail/SMS · Msgs 1.3, 2.2, 3.1, 7: WhatsApp | **Adotado:** WhatsApp (mensagem 7) |
@@ -551,6 +591,41 @@ Confirmar se ainda falta algo. Na especificação de mensagens, a seção 8
 ## 9. Ações combinadas
 - **Thompson**: tentar novamente o cadastro da VPS; planejamento técnico.
 - **Anna**: acompanhar a Mari sobre a VPS (ou via TI); revisar os
-  **[PENDENTE]** deste documento; enviar os textos padrão das mensagens e a
+  decisões da seção 10; enviar os textos padrão das mensagens e a
   lista de dados cadastrais que o bot deve coletar dos pacientes novos.
 - Verificar se ainda há acesso ao site feito anteriormente pela Flávia.
+
+---
+
+## 10. Pendências resolvidas (decisões técnicas)
+
+Decisões tomadas com base nas necessidades do sistema, segurança e LGPD.
+Todas são **configuráveis** na área administrativa quando fizer sentido.
+
+| # | Pendência | Decisão | Motivo |
+|---|---|---|---|
+| 1 | Identificador do paciente | **CPF ou Cartão SUS (CNS)**, com validação dos dígitos | Pacientes da regulação têm CNS, nem sempre CPF |
+| 2 | Paciente sem CPF e sem CNS | Entra como **pré-cadastro** (nome, data de nascimento, telefone); a equipe completa depois. Só cadastro "completo" exige um dos dois | Não perder o contato espontâneo sem abrir mão da identificação |
+| 3 | Dados cadastrais que o bot coleta (pacientes novos) | Mínimo: nome da mãe, CEP, endereço (logradouro, número, bairro), município/UF. **Opcionais:** e-mail, prontuário | Minimização (LGPD): o necessário para identificação e contato |
+| 4 | Aconselhamento genético | Mesmo fluxo geral (confirmação genérica 3.1), equipe própria; serviço fica **inativo** até a equipe cadastrar orientações e formulário | Não depende de desenvolvimento específico |
+| 5 | Aviso LGPD | Aviso de **ciência** (não consentimento), enviado uma vez por número, botão *Entendi* | Base legal de tutela da saúde |
+| 6 | 2FA | Obrigatório para Admin e Supervisão | Ambos acessam credenciais e todos os pacientes |
+| 7 | Trava de inatividade do bot | 15 min | Conversa curta de triagem |
+| 8 | Trava do atendimento humano | 30 min | Dentro dos 20–30 min da reunião |
+| 9 | Lembrete da consulta | 24h antes | Tempo para o paciente reorganizar ou pedir remarcação |
+| 10 | Envio do link | 10 min antes | Já adotado |
+| 11 | Avaliação | Imediata ao marcar "realizada" | Já adotado |
+| 12 | Regra final de não resposta | Sem cancelamento automático; 🔵 + pendência "ligar"; destaque se faltar < 48h | Cancelar sozinho poderia tirar a vaga de um paciente da regulação |
+| 13 | Palavras de urgência | Orientação imediata de emergência (192) + prioridade urgente | Segurança do paciente; o bot não avalia clinicamente |
+| 14 | Retenção de dados | 5 anos após o último contato → anonimização; anexos apagados 90 dias após a consulta | Minimização; o sistema não é o prontuário oficial |
+| 15 | Hospedagem | VPS no Brasil, requisitos mínimos na seção 6 | LGPD e desempenho |
+| 16 | Disponibilidade de horários pelo Atendente | Não se aplica (sem autoagendamento) | – |
+
+**Dependências externas (não são decisões de sistema):**
+1. Contratar a VPS (Mari / TI).
+2. Criar a conta Meta Business do hospital e o número institucional.
+3. Equipe validar os textos das mensagens e escrever as orientações.
+4. Equipe de enfermagem/médica revisar a mensagem de urgência (U).
+5. Encarregado (DPO) do hospital revisar o aviso de privacidade e a seção 6.1.
+6. Links dos formulários de avaliação por serviço.
+

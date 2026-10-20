@@ -126,7 +126,8 @@ procape-saude-digital/
 │   │           ├── pos-consulta.job.ts       # agradecimento + formulário após "realizada"
 │   │           ├── lembrete-consulta.job.ts
 │   │           ├── inatividade.job.ts        # encerra conversas (bot X min, equipe 30 min)
-│   │           └── disparo-campanha.job.ts   # envio em lote respeitando limite da Meta
+│   │           ├── disparo-campanha.job.ts   # envio em lote respeitando limite da Meta
+│   │           └── retencao-lgpd.job.ts      # diário: apaga anexos (90 dias) e anonimiza (5 anos)
 │   │
 │   └── web/                          # painel React
 │       └── src/
@@ -223,8 +224,11 @@ sequenceDiagram
 ### 4.3 Regras transversais (no motor, não em cada fluxo)
 - Palavras como "atendente", "humano", "equipe" → encaminhamento em
   qualquer etapa.
-- Palavras de urgência (configuráveis) → prioridade `urgente` +
-  encaminhamento.
+- Palavras de urgência (configuráveis) → mensagem **U** (procurar
+  emergência / 192) na hora, em qualquer etapa e horário, + atendimento
+  `urgente` + notificação.
+- "meus dados" → registra pedido de direitos do titular (LGPD) na fila da
+  Supervisão.
 - Resposta não entendida → envia a mensagem 12 (menu de 6 opções); na 2ª
   vez, encaminha (`nao_entendido`).
 - Toda mensagem do bot vem de `modelos_mensagem` pela **chave**; o código
@@ -298,7 +302,12 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 - Auditoria de visualização e alteração de pacientes.
 - Assinatura do webhook da Meta validada (`X-Hub-Signature-256`).
 - Anexos fora da pasta pública, servidos só para usuário autenticado.
-- Backup diário do PostgreSQL criptografado, fora da VPS.
+- Backup diário do PostgreSQL criptografado, fora da VPS, 30 dias de
+  retenção, teste de restauração mensal.
+- 2FA (TOTP) obrigatório para Admin e Supervisão; bloqueio após 5 tentativas;
+  sessão expira após 30 min sem uso.
+- Exportação e anonimização de um paciente (atendimento aos direitos do
+  titular), disponíveis só para Supervisão/Admin.
 - Ambiente de teste com **dados fictícios** (seed) e número de WhatsApp de
   teste; nenhum dado real fora da VPS oficial.
 
