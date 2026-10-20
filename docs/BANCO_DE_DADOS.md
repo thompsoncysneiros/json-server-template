@@ -29,6 +29,8 @@ erDiagram
     pacientes ||--o{ paciente_telefones : ""
     pacientes ||--o{ paciente_servicos : ""
     importacoes ||--o{ pacientes : "origem"
+    pacientes ||--o{ observacoes : ""
+    agendamentos ||--o{ observacoes : ""
     servicos  ||--o{ paciente_servicos : ""
     pacientes ||--o{ consentimentos : ""
 
@@ -62,7 +64,7 @@ Agrupamento:
 | Grupo | Tabelas |
 |---|---|
 | Acesso | `perfis`, `permissoes`, `perfil_permissoes`, `usuarios`, `equipes`, `usuario_equipes` |
-| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `consentimentos`, `importacoes` |
+| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `observacoes`, `consentimentos`, `importacoes` |
 | Agenda | `agendamentos`, `agendamento_eventos` |
 | Mensagens | `modelos_mensagem`, `comunicacoes`, `campanhas`, `campanha_destinatarios`, `orientacoes`, `formularios` |
 | Conversa | `conversas`, `mensagens`, `anexos` |
@@ -99,7 +101,7 @@ Agrupamento:
 ### `permissoes`
 Lista fixa de ações verificadas pela API, no formato `recurso.acao`:
 `pacientes.ver`, `pacientes.ver_dados_completos`, `pacientes.editar`,
-`pacientes.importar`, `pacientes.exportar`, `agendamentos.gerenciar`,
+`implantacao.carga_inicial`, `pacientes.exportar_cadastro`, `observacoes.registrar`, `agendamentos.gerenciar`,
 `agendamentos.marcar_realizado`, `campanhas.enviar`, `fila.atender`,
 `fila.transferir`, `prontuario.registrar`, `telefones.validar`,
 `agenda.ver`, `relatorios.ver`,
@@ -159,8 +161,7 @@ várias equipes (define quais filas ele vê).
 | prontuario | text null unique | nº do prontuário do hospital – **opcional**, preenchido só se o paciente tiver; nenhum fluxo depende dele |
 | origem | enum | `regulacao`, `mutirao`, `base_procape`, `contato_espontaneo`, `importacao` |
 | numero_solicitacao | text null | nº da regulação |
-| observacoes | text | uso interno da equipe (coluna *Observações* da planilha) |
-| importacao_id | FK importacoes null | planilha de origem |
+| importacao_id | FK importacoes null | planilha de origem (carga inicial) |
 | excluido_em | timestamptz null | exclusão lógica |
 
 | situacao_cadastro | enum | `pre_cadastro`, `completo` |
@@ -201,8 +202,28 @@ cuida de dois pacientes) → o bot pergunta de quem se trata.
 Permite saber, quando o paciente escreve, em que serviço ele está ativo e
 sugerir no menu.
 
-### `importacoes`
-Registro de cada planilha importada (menu Pacientes › Importar planilha).
+### `observacoes` (registro de ocorrências)
+Histórico de anotações da equipe, usado quando algo não ocorreu como
+previsto ou houve alteração no atendimento/cadastro (`REQUISITOS.md` 3.5.1).
+| Coluna | Tipo | Observação |
+|---|---|---|
+| id | uuid PK | |
+| paciente_id | FK | |
+| agendamento_id | FK null | quando se refere a uma consulta/procedimento |
+| tipo | enum | `atendimento`, `cadastro`, `outro` |
+| texto | text | |
+| origem | enum | `usuario`, `carga_inicial` (coluna *Observações* da planilha) |
+| motivo_sugerido | text null | ação que gerou a sugestão (ex.: `cancelamento`, `faltou`, `troca_telefone`) |
+| autor_id | FK usuarios null | null quando veio da planilha |
+| criado_em | timestamptz | |
+| editado_em | timestamptz null | só o autor, até 24h; versão anterior na auditoria |
+
+Sem exclusão. Entra na `vw_linha_do_tempo_paciente`.
+
+### `importacoes` (carga inicial)
+Registro de cada planilha importada na **implantação** (Administração ›
+Carga inicial). A função é desativada ao fim da implantação
+(`implantacao.carga_inicial_habilitada = false`).
 | Coluna | Tipo | Observação |
 |---|---|---|
 | id | uuid PK | |
@@ -523,6 +544,7 @@ Chave/valor (`jsonb`) editável pela coordenação:
 | `nao_resposta.horas_apos_ultimo_lembrete` | 24 (então encaminha para a equipe) |
 | `nao_resposta.acao_final` | `sinalizar` (nunca cancela automaticamente) |
 | `nao_resposta.horas_destaque_antes_consulta` | 48 |
+| `implantacao.carga_inicial_habilitada` | true durante a implantação; depois false |
 | `importacao.ddd_padrao` | 81 |
 | `importacao.equivalencia_situacao` | `{"confirmado":"confirmado","remarcar":"remarcacao_solicitada","cancelado":"cancelado","nao atende":"sem_resposta","realizado":"realizado","faltou":"faltou"}` |
 | `lembrete_consulta.horas_antes` | 24 (padrão; o serviço pode sobrescrever) |
@@ -550,7 +572,7 @@ Chave/valor (`jsonb`) editável pela coordenação:
   ou pendência aberta, data do último contato. Alimenta a lista principal
   (ordenação "não atendidos primeiro, mais antigos primeiro").
 - **`vw_linha_do_tempo_paciente`** – `UNION` de `agendamento_eventos`,
-  `atendimentos_humanos`, `pendencias`, `comunicacoes`, mensagens com `destaque`, início e
+  `atendimentos_humanos`, `pendencias`, `comunicacoes`, `observacoes`, mensagens com `destaque`, início e
   fim de conversas → a ficha "o que já aconteceu" da seção 3.2.
 - **`vw_comunicacoes_pendentes`** – pacientes com envio sem resposta, em
   que etapa estão (original, lembrete 1, lembrete 2) e se requerem equipe.

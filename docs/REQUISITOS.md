@@ -112,13 +112,21 @@ Ao abrir um paciente, a equipe vê em uma única tela (sem ler a conversa toda):
 - **Lista "Aguardando agendamento"**: pacientes que pediram agendamento ou
   remarcação e ainda não têm data (🟣/🟡).
 
-### 3.5 Importação da planilha e disparo em lote
+### 3.5 Dados cadastrais, carga inicial da planilha e disparo em lote
 
-**Dados cadastrais do paciente** = as colunas da planilha usada hoje pela
-equipe + o **CPF** (coletado pelo bot, pois a planilha não tem). Nada além
-disso é pedido ao paciente (minimização – LGPD).
+**Dados cadastrais do paciente** = nome, prontuário (opcional), até 3
+telefones, data de nascimento e **CPF** (coletado pelo bot, pois a planilha
+não tem). Nada além disso é pedido ao paciente (minimização – LGPD).
 
-Menu **Pacientes › Importar planilha** (.xlsx ou .csv):
+**Carga inicial (só na implantação).** A planilha atual é importada **uma
+vez**, no início, para trazer os pacientes que já existem. Depois disso,
+novos pacientes são cadastrados direto no sistema (**Pacientes › Novo
+paciente**) e a planilha deixa de ser usada. Por isso a importação fica em
+**Administração › Carga inicial**, acessível só para Admin e Supervisão, e é
+**desativada** ao concluir a implantação (pode ser reativada pelo Admin se
+for preciso).
+
+Passos da carga inicial (.xlsx ou .csv):
 1. Enviar o arquivo e escolher o **serviço** da planilha (pré-cateterismo
    regulação, mutirão, pós-angioplastia…) – cada planilha é de um serviço.
 2. O sistema reconhece as colunas e mostra uma **prévia** linha a linha, com
@@ -126,6 +134,8 @@ Menu **Pacientes › Importar planilha** (.xlsx ou .csv):
 3. A equipe confirma; o sistema cria/atualiza os pacientes e agendamentos.
 4. **Nenhuma mensagem é enviada na importação.** Depois, a equipe escolhe em
    **Disparos** para quem enviar.
+5. Pode ser feita mais de uma vez durante a implantação (uma planilha por
+   serviço); o arquivo não fica guardado depois de processado.
 
 | Coluna da planilha | Onde fica no sistema | Regras |
 |---|---|---|
@@ -137,8 +147,8 @@ Menu **Pacientes › Importar planilha** (.xlsx ou .csv):
 | **Data do Procedimento** | Agendamento do tipo **procedimento** (cateterismo/angioplastia, conforme o serviço) | Opcional; usada para **sugerir** a data da teleconsulta (≈7 dias antes) |
 | **Data de telemonitoramento** | Agendamento do tipo **telemonitoramento** | Opcional; ver nota abaixo |
 | **TELECONSULTA** | Agendamento do tipo **teleconsulta** (data e hora) | Se vier só a data, fica 🟣 "aguardando horário" até a equipe completar |
-| **Situação** | Status do agendamento (cor da lista) | Convertida por uma tabela de equivalência editável (abaixo); valor desconhecido vai para Observações |
-| **Observações** | Paciente › observações (uso interno) | Texto livre |
+| **Situação** | Status do agendamento (cor da lista) | Convertida por uma tabela de equivalência editável (abaixo); valor desconhecido vira uma observação |
+| **Observações** | Primeira **observação** do paciente (3.5.1), marcada como "importada da planilha" | Texto livre |
 | *(CPF – não existe na planilha)* | Paciente › CPF | O paciente entra como **pré-cadastro** e o bot pede o CPF na primeira conversa |
 
 Equivalência sugerida da coluna **Situação** (editável em Admin › Prazos e
@@ -159,11 +169,15 @@ ou, sem ele, por **nome + data de nascimento**. Paciente já existente é
 **atualizado** (campos vazios são preenchidos; campos diferentes aparecem na
 prévia para a equipe decidir).
 
-Também é possível **exportar** a lista de pacientes no mesmo formato da
-planilha, para o período de transição.
+**Exportação: somente dados cadastrais.** Em **Pacientes › Exportar
+cadastro** (Admin e Supervisão) é possível baixar (.xlsx/.csv) **apenas**:
+nome, CPF, prontuário, telefones e data de nascimento, com filtro por
+serviço. Agendamentos, situação, observações, conversas e anexos **não são
+exportados**. Toda exportação fica registrada na auditoria (quem, quando,
+quantos pacientes).
 
 **Disparo em lote** (menu Disparos): selecionar pacientes (ex.: os
-importados na semana) e enviar a mesma mensagem para o grupo ("estes 3 para
+cadastrados na semana) e enviar a mesma mensagem para o grupo ("estes 3 para
 o dia X, estes 3 para o dia Y"), com cadência de envio (4.17).
 
 > **[DEPENDÊNCIA]** Confirmar com a equipe: (1) quais textos são usados hoje
@@ -172,6 +186,24 @@ o dia X, estes 3 para o dia Y"), com cadência de envio (4.17).
 > envia mensagem ao paciente nessa data ou só lembra a equipe. Até lá, o
 > plano trata o telemonitoramento como **tarefa da equipe** que aparece na
 > agenda, sem mensagem automática ao paciente.
+
+### 3.5.1 Observações (registro de ocorrências)
+As observações **não são um campo único**, e sim um **histórico de
+anotações** do paciente, usado principalmente quando algo **não ocorreu
+como o previsto** no atendimento ou houve alteração no cadastro (ex.:
+"paciente informou novo telefone pelo filho", "não compareceu por
+internação", "remarcou duas vezes por falta de transporte").
+
+- Cada observação tem: texto, **tipo** (*Atendimento* · *Cadastro* ·
+  *Outro*), agendamento relacionado (opcional), autor e data/hora.
+- Não podem ser apagadas nem editadas por outros usuários; o autor pode
+  corrigir em até 24h, e a correção fica no histórico (auditoria).
+- Aparecem na aba **Observações** da ficha e na **linha do tempo**.
+- O sistema **sugere** registrar uma observação (opcional) quando a equipe:
+  cancela ou remarca um agendamento, marca *faltou*, altera dados
+  cadastrais ou troca o telefone principal.
+- Regra de conteúdo (LGPD): registrar só o necessário para o atendimento;
+  informação clínica detalhada vai para o prontuário oficial.
 
 ### 3.6 Fila de atendimento humano + notificações
 - Itens criados quando o paciente pede a equipe ou quando o bot encaminha
@@ -223,7 +255,9 @@ Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leit
 | Ver lista/ficha de pacientes | ✅ | ✅ | 🔸 | 🔸 |
 | Ver CPF/telefone completos | ✅ | ✅ | ✅ | 🔸 |
 | Cadastrar/editar paciente | ✅ | ✅ | ✅ | 🔸 |
-| Importar planilha / disparo em lote | ✅ | ✅ | ✅ | ❌ |
+| Carga inicial da planilha (implantação) | ✅ | ✅ | ❌ | ❌ |
+| Disparo em lote | ✅ | ✅ | ✅ | ❌ |
+| Registrar observação | ✅ | ✅ | ✅ | 🔸 |
 | Criar/remarcar/cancelar agendamento | ✅ | ✅ | ✅ | 🔸 |
 | Marcar consulta como realizada | ✅ | ✅ | ✅ | 🔸 |
 | Fila de atendimento e chat | ✅ | ✅ | 🔸 | 🔸 |
@@ -232,7 +266,7 @@ Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leit
 | Validar troca de telefone | ✅ | ✅ | ✅ | ❌ |
 | Agenda (calendário) | ✅ | ✅ | ✅ | 🔸 |
 | Relatórios | ✅ | ✅ | 👁 básico | ❌ |
-| Exportar dados | ✅ | ✅ | ❌ | ❌ |
+| Exportar dados cadastrais | ✅ | ✅ | ❌ | ❌ |
 | Modelos de mensagem, orientações, formulários | ✅ | ✅ | ❌ | ❌ |
 | Serviços, prazos, horário de atendimento | ✅ | ✅ | ❌ | ❌ |
 | Usuários e equipes | ✅ | ✅ (níveis 3–4) | ❌ | ❌ |
@@ -270,12 +304,12 @@ WhatsApp (🟢/🔴) · menu do usuário (meu perfil, trocar senha, 2FA, sair).
 |---|---|---|---|
 | 1 | 🏠 **Início** | – | Painel do dia: teleconsultas de hoje, **sem link**, atendimentos abertos e urgentes, sem resposta, aguardando agendamento |
 | 2 | 💬 **Atendimentos** | Aguardando · Em atendimento · Resolvidos | Fila da equipe (urgentes no topo, contador no menu). Ao abrir, mostra o **chat** com o paciente e o resumo do atendimento |
-| 3 | 👥 **Pacientes** | Lista · Novo paciente · Importar planilha | Lista com cores e filtros (3.1). **Ficha do paciente** com abas: Dados · Agendamentos (com a área "Link da teleconsulta") · Linha do tempo · Conversas · Pendências · Anexos |
+| 3 | 👥 **Pacientes** | Lista · Novo paciente · Exportar cadastro | Lista com cores e filtros (3.1). **Ficha do paciente** com abas: Dados · Agendamentos (com a área "Link da teleconsulta") · Observações · Linha do tempo · Conversas · Pendências · Anexos |
 | 4 | 📅 **Agenda** | Calendário (dia/semana/mês) · Aguardando agendamento · Sem link | Visão das consultas e procedimentos; pedidos de agendamento/remarcação a definir |
 | 5 | 📤 **Disparos** | Novo disparo · Histórico | Envio em lote (ex.: lista semanal do pré-cateterismo), com acompanhamento de quem recebeu/respondeu |
 | 6 | ✅ **Pendências** | Da equipe · Aguardando paciente · Ligar (sem resposta) | Tarefas que travam o atendimento |
-| 7 | 📊 **Relatórios** | Indicadores · Exportar | Confirmações, faltas, não resposta, tempo de atendimento da fila |
-| 8 | ⚙️ **Administração** | Usuários · Equipes · Perfis e permissões · Serviços · Mensagens · Orientações · Formulários · Horários e feriados · Prazos e regras · WhatsApp (conexão/QR) · Auditoria | Área administrativa (3.8) |
+| 7 | 📊 **Relatórios** | Indicadores | Confirmações, faltas, não resposta, tempo de atendimento da fila (só números, sem dados de pacientes) |
+| 8 | ⚙️ **Administração** | Usuários · Equipes · Perfis e permissões · Serviços · Mensagens · Orientações · Formulários · Horários e feriados · Prazos e regras · WhatsApp (conexão/QR) · Auditoria · **Carga inicial** (só durante a implantação) | Área administrativa (3.8) |
 
 **Menus visíveis por nível** (✅ completo · 🔸 só da própria equipe · ❌ não aparece):
 
@@ -283,11 +317,11 @@ WhatsApp (🟢/🔴) · menu do usuário (meu perfil, trocar senha, 2FA, sair).
 |---|---|---|---|---|
 | Início | ✅ | ✅ | ✅ | 🔸 |
 | Atendimentos | ✅ | ✅ | 🔸 | 🔸 |
-| Pacientes | ✅ | ✅ | ✅ | 🔸 (sem "Importar") |
+| Pacientes | ✅ | ✅ | ✅ (sem "Exportar cadastro") | 🔸 (sem "Exportar cadastro") |
 | Agenda | ✅ | ✅ | ✅ | 🔸 |
 | Disparos | ✅ | ✅ | ✅ | ❌ |
 | Pendências | ✅ | ✅ | ✅ | 🔸 |
-| Relatórios | ✅ | ✅ | Só Indicadores (básico) | ❌ |
+| Relatórios | ✅ | ✅ | Indicadores básicos | ❌ |
 | Administração | ✅ (tudo) | ✅ (exceto Perfis e permissões) | ❌ | ❌ |
 
 Na Administração, a Supervisão gerencia apenas usuários de nível 3 e 4
@@ -674,7 +708,8 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
 ---
 
 ## 7. Fases sugeridas
-1. **MVP**: login com níveis de acesso, cadastro/importação de pacientes,
+1. **MVP**: login com níveis de acesso, cadastro de pacientes e carga
+   inicial da planilha, observações,
    agendamentos múltiplos pela equipe, mensagens de primeiro contato,
    confirmação, lembretes (1 e 2), confirmação de presença, link da
    teleconsulta e agradecimento/avaliação, lista com cores e filtros, disparo
@@ -737,7 +772,7 @@ Todas são **configuráveis** na área administrativa quando fizer sentido.
 |---|---|---|---|
 | 1 | Identificador do paciente | **Somente CPF**, com validação dos dígitos | Decisão da equipe; CPF é o número único de identificação do cidadão (Lei 14.534/2023) |
 | 2 | Paciente ainda sem CPF no cadastro (ex.: lista da regulação traz só Cartão SUS) | Entra como **pré-cadastro**; o bot pede o CPF na primeira interação e completa o cadastro. Cartão SUS fica guardado como dado informativo, mas não serve para identificar | Lista da regulação nem sempre traz CPF |
-| 3 | Dados cadastrais | **Os da planilha da equipe** (nome, prontuário, até 3 telefones, data de nascimento, observações) **+ CPF**. Sem endereço, nome da mãe ou e-mail | Definido pela equipe; atende à minimização (LGPD) |
+| 3 | Dados cadastrais | Nome, prontuário (opcional), até 3 telefones, data de nascimento **+ CPF**. Sem endereço, nome da mãe ou e-mail. Planilha só na carga inicial; exportação só desses dados | Definido pela equipe; atende à minimização (LGPD) |
 | 4 | Aconselhamento genético | Mesmo fluxo geral (confirmação genérica 3.1), equipe própria; serviço fica **inativo** até a equipe cadastrar orientações e formulário | Não depende de desenvolvimento específico |
 | 5 | Aviso LGPD | Aviso de **ciência** (não consentimento), enviado uma vez por número, opção *1 – Entendi* | Base legal de tutela da saúde |
 | 5b | Canal WhatsApp | **Baileys**, com as mitigações da seção 6 | Decisão da equipe: sem custo e sem aprovação de modelos |

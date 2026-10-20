@@ -87,7 +87,8 @@ procape-saude-digital/
 │   │       │   ├── usuarios/
 │   │       │   ├── equipes/
 │   │       │   ├── servicos/
-│   │       │   ├── pacientes/        # cadastro, telefones, busca, importação/exportação da planilha (xlsx/csv), linha do tempo
+│   │       │   ├── pacientes/        # cadastro, telefones, busca, observações, exportação do cadastro, linha do tempo
+│   │       │   ├── implantacao/      # carga inicial da planilha (xlsx/csv) – desativada após a implantação
 │   │       │   ├── agenda/           # calendário e sugestão de data (regra do pré-cateterismo)
 │   │       │   ├── agendamentos/     # CRUD, transições de status, eventos
 │   │       │   ├── campanhas/        # disparo em lote
@@ -149,7 +150,7 @@ procape-saude-digital/
 │               ├── Fila/             # atendimentos humanos por equipe
 │               ├── Chat/             # conversa em atendimento
 │               ├── Agenda/           # calendário + lista "aguardando agendamento"
-│               ├── Campanhas/        # importação e disparo em lote
+│               ├── Campanhas/        # disparo em lote
 │               ├── Pendencias/
 │               └── Admin/            # área administrativa – protegida por permissão
 │                   ├── Usuarios/
@@ -287,7 +288,8 @@ Remarcar ou cancelar **cancela e recria** esses jobs.
 | Admin | CRUD `/admin/usuarios`, `/admin/perfis` (+ `PUT /admin/perfis/:id/permissoes`), `/admin/equipes`, `/admin/servicos`, `/admin/modelos-mensagem`, `/admin/orientacoes`, `/admin/formularios`, `/admin/horarios`, `/admin/feriados`; `GET/PUT /admin/configuracoes`; `GET /admin/auditoria` |
 | Comunicações | `GET /pacientes/:id/comunicacoes`, `GET /comunicacoes?requerEquipe=true` |
 | Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 8.3); `faltou` → envia 8.4 |
-| Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `POST /pacientes/importar/previa` (lê a planilha e devolve a prévia com erros), `POST /pacientes/importar/confirmar`, `GET /pacientes/exportar?formato=planilha` |
+| Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `GET/POST /pacientes/:id/observacoes`, `GET /pacientes/exportar-cadastro?servico=&formato=xlsx` (só dados cadastrais; Admin/Supervisão; auditado) |
+| Carga inicial | `POST /admin/carga-inicial/previa` (lê a planilha e devolve a prévia com erros), `POST /admin/carga-inicial/confirmar` – bloqueadas quando a carga inicial estiver desativada |
 | Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/validar` |
 | Agendamentos | `GET /agendamentos?de=&ate=&status=`, `POST /pacientes/:id/agendamentos` (envia confirmação), `PATCH /agendamentos/:id`, `POST /agendamentos/:id/remarcar`, `POST /agendamentos/:id/cancelar`, `PUT /agendamentos/:id/link` (link + horário de envio), `POST /agendamentos/:id/link/enviar` (enviar agora / reenviar) |
 | Agenda | `GET /agenda?de=&ate=&servico=` (calendário), `GET /agenda/sugestao?servico=&dataProcedimento=` (data sugerida + horários já ocupados), `GET /agendamentos?status=solicitado,remarcacao_solicitada` (aguardando agendamento) |
@@ -337,7 +339,7 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 |---|---|---|
 | 0. Preparação | antes | VPS, chip de teste para o Baileys |
 | 1. Base | 1–3 | Monorepo, Docker Compose, schema e migrações, auth com níveis de acesso, seed fictício |
-| 2. Cadastro e agenda | 3–5 | Pacientes, serviços, agendamentos, lista com cores/filtros, importação |
+| 2. Cadastro e agenda | 3–5 | Pacientes, observações, serviços, agendamentos, lista com cores/filtros, carga inicial da planilha |
 | 3. WhatsApp + bot MVP | 5–8 | Gateway Baileys (conexão, QR, reconexão), provedor, modelos de mensagem, primeiro contato, confirmação, confirmação de presença, encaminhamento (com fora do horário), fila, chat, notificações |
 | 4. Jobs | 8–10 | Não resposta (2 lembretes), lembrete da consulta, envio do link, agradecimento/avaliação, travas de tempo, disparo em lote |
 | 5. Testes com a equipe | 11–20 | Testes da Anna, ajustes; em paralelo: identificação completa, menu, orientações, solicitação de agendamento pelo bot, pendência do paciente, linha do tempo, demais telas admin |
