@@ -12,6 +12,8 @@ Documentos relacionados:
 - [`ARQUITETURA.md`](ARQUITETURA.md) – stack, módulos e estrutura de código.
 - [`MENSAGENS.md`](MENSAGENS.md) – catálogo dos textos do bot, gatilhos e
   ajustes sugeridos.
+- [`NECESSIDADES_TECNICAS.md`](NECESSIDADES_TECNICAS.md) – necessidades de
+  servidor, rede, segurança e LGPD para a TI/infra da UPE.
 
 ---
 
