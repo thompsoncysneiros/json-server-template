@@ -48,7 +48,7 @@ Legenda da coluna "Tipo":
 - **Ativa** – o PROCAPE inicia (disparo da equipe ou envio programado).
 - **Resposta** – o bot responde dentro de uma conversa.
 
-Variáveis: `{{nome}}`, `{{tipo_teleconsulta}}`, `{{data}}`,
+Variáveis: `{{nome}}`, `{{nome_curto}}` (primeiro nome + inicial do sobrenome), `{{tipo_teleconsulta}}`, `{{data}}`,
 `{{dia_semana}}`, `{{horario}}`, `{{link}}`, `{{link_formulario}}`,
 `{{pendencia_descricao}}`, `{{horario_atendimento}}`,
 `{{minutos_link}}`.
@@ -87,6 +87,11 @@ Variáveis: `{{nome}}`, `{{tipo_teleconsulta}}`, `{{data}}`,
 | 11 | `geral.encaminhado_equipe` | Todos | Falar com a equipe / encaminhamento | Resposta | – |
 | 12 | `geral.nao_entendido` | Todos | Resposta não reconhecida | Resposta | Menu de 6 opções |
 | M | `geral.menu` | Todos | Paciente inicia conversa | Resposta | Menu de 6 opções |
+| ID-A | `ident.confirmar_paciente` | Todos | Telefone validado com 1 paciente (caso A) | Resposta | – (pede data de nascimento) |
+| ID-B | `ident.escolher_paciente` | Todos | Telefone validado com 2+ pacientes (caso B) | Resposta | Pacientes (primeiro nome + inicial) · Outra pessoa |
+| ID-C | `ident.pedir_cpf` | Todos | Telefone não confirmado ou não encontrado (casos C/D) | Resposta | – (CPF e depois data de nascimento) |
+| ID-F | `ident.pedir_documento` | Todos | Cadastro novo ou número novo (casos E/F) | Resposta | – (foto do documento) |
+| ID-X | `ident.falha` | Todos | Dado não confere / 3 falhas | Resposta | – |
 | A | `geral.aviso_privacidade` | Todos | Primeiro contato do número | Resposta | Entendi |
 | U | `geral.alerta_urgencia` | Todos | Palavra de alerta, em qualquer etapa | Resposta | – (atendimento urgente) |
 
@@ -428,6 +433,54 @@ Como podemos ajudar? Responda com o número da opção:
 ```
 Mesmos 6 itens da mensagem 12. Paciente ainda não identificado: "Olá!" sem
 nome.
+
+### Mensagens de identificação (ver `REQUISITOS.md` 4.1.1)
+
+**ID-A `ident.confirmar_paciente`** – telefone validado, 1 paciente
+```
+Olá! 🫀 Aqui é da equipe de Saúde Digital do PROCAPE.
+Falo com *{{nome_curto}}* ou com alguém que cuida dele(a)?
+Para sua segurança, informe a *data de nascimento* do(a) paciente (ex.: 05/03/1958).
+```
+
+**ID-B `ident.escolher_paciente`** – telefone validado, vários pacientes
+```
+Olá! 🫀 Aqui é da equipe de Saúde Digital do PROCAPE.
+Este número está cadastrado para mais de uma pessoa. Sobre quem você quer falar?
+```
+Opções: uma por paciente (`1️⃣ Maria S.`, `2️⃣ José S.`…) + **Outra pessoa**.
+Em seguida, pede a data de nascimento do paciente escolhido.
+
+**ID-C `ident.pedir_cpf`** – telefone não confirmado ou desconhecido
+```
+Olá! 🫀 Aqui é da equipe de Saúde Digital do PROCAPE.
+Para localizarmos o cadastro, informe o *CPF do(a) paciente* (somente números).
+```
+Depois: "Agora informe a *data de nascimento* do(a) paciente."
+
+**ID-F `ident.pedir_documento`** – cadastro novo ou número novo
+```
+Para sua segurança, precisamos confirmar a identidade do(a) paciente. 🔒
+Envie uma *foto do documento oficial com foto e CPF* do(a) paciente (RG, CNH ou similar).
+Nossa equipe vai conferir e dará continuidade por aqui.
+```
+Até a conferência, o bot não informa consultas nem confirma dados.
+
+**ID-X `ident.falha`**
+```
+Os dados informados não conferem com o nosso cadastro. Por favor, verifique e tente novamente.
+```
+Na 3ª falha: "Não foi possível confirmar a identidade. Por segurança, nossa
+equipe vai entrar em contato por este WhatsApp." (bloqueio de 30 min +
+encaminhamento).
+
+**Prefixo em número compartilhado** – toda mensagem ativa (confirmação,
+lembrete, link, avaliação) enviada a um número ligado a mais de um paciente
+começa com:
+```
+📌 Esta mensagem é sobre *{{nome_curto}}*.
+```
+`{{nome_curto}}` = primeiro nome + inicial do sobrenome.
 
 ### A `geral.aviso_privacidade` – Resposta
 ```

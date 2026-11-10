@@ -64,7 +64,7 @@ Agrupamento:
 | Grupo | Tabelas |
 |---|---|
 | Acesso | `perfis`, `permissoes`, `perfil_permissoes`, `usuarios`, `equipes`, `usuario_equipes` |
-| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `observacoes`, `consentimentos`, `importacoes` |
+| Cadastro | `servicos`, `pacientes`, `paciente_telefones`, `paciente_servicos`, `observacoes`, `consentimentos`, `importacoes`, `verificacoes_identidade` |
 | Agenda | `agendamentos`, `agendamento_eventos` |
 | Mensagens | `modelos_mensagem`, `comunicacoes`, `campanhas`, `campanha_destinatarios`, `orientacoes`, `formularios` |
 | Conversa | `conversas`, `mensagens`, `anexos` |
@@ -164,7 +164,7 @@ várias equipes (define quais filas ele vê).
 | importacao_id | FK importacoes null | planilha de origem (carga inicial) |
 | excluido_em | timestamptz null | exclusão lógica |
 
-| situacao_cadastro | enum | `pre_cadastro`, `completo` |
+| situacao_cadastro | enum | `pre_cadastro` (ex.: carga inicial sem CPF), `aguardando_validacao` (criado pelo bot – documento a conferir), `completo` |
 | anonimizado_em | timestamptz null | retenção LGPD (5 anos após o último contato) |
 
 Regra: cadastro `completo` exige `cpf` (check constraint), com dígitos
@@ -182,13 +182,32 @@ com trigram para busca por nome.
 | numero | varchar(20) | formato E.164 (`+5581...`) |
 | whatsapp | bool | |
 | principal | bool | um principal por paciente (índice único parcial) |
-| status | enum | `ativo`, `pendente_validacao` (número novo informado pelo paciente), `inativo` |
-| validado_por | FK usuarios null | quem confirmou com documento |
+| status | enum | `validado`, `nao_confirmado` (ex.: veio da carga inicial), `pendente_validacao` (número novo informado no bot – aguarda documento conferido), `inativo` |
+| relacao | enum | `proprio`, `responsavel_cuidador`, `familiar`, `outro` |
+| nome_contato | text null | quem atende neste número, se não for o paciente (ex.: "Ana – filha") |
+| validado_por | FK usuarios null | quem validou (null quando validado pela verificação no bot) |
 | validado_em | timestamptz null | |
+| forma_validacao | enum null | `cadastro_equipe`, `documento_conferido`, `verificacao_bot` (CPF + data de nascimento conferidos) |
 
-Índice em `numero` – é por ele que o bot identifica o paciente ao receber
-mensagem. Um mesmo número pode pertencer a mais de um paciente (familiar que
-cuida de dois pacientes) → o bot pergunta de quem se trata.
+Índice em `numero` (não único) – é por ele que o bot filtra os possíveis
+pacientes ao receber mensagem (`REQUISITOS.md` 4.1.1). Um mesmo número pode
+pertencer a **vários pacientes** (cuidador de idosos, familiar, número da
+comunidade): nesse caso o bot pergunta sobre quem se trata e verifica a
+data de nascimento do escolhido.
+
+### `verificacoes_identidade`
+Registro de cada tentativa de verificação no bot (segurança e auditoria).
+| Coluna | Tipo | Observação |
+|---|---|---|
+| id | uuid PK | |
+| conversa_id | FK | |
+| telefone | varchar(20) | |
+| paciente_id | FK null | paciente que se tentou verificar |
+| metodo | enum | `data_nascimento`, `cpf_data_nascimento`, `documento` |
+| resultado | enum | `sucesso`, `falha`, `bloqueado` (3 falhas → 30 min) |
+| criado_em | timestamptz | |
+
+Nunca guarda o valor digitado (CPF/data), só o resultado.
 
 ### `paciente_servicos`
 | Coluna | Tipo | Observação |
@@ -370,7 +389,7 @@ houve resposta, status e necessidade de intervenção.
 | mensagem_id | FK mensagens | mensagem efetivamente enviada |
 | agendada_para | timestamptz null | envios programados (link, lembrete) |
 | enviada_em | timestamptz null | |
-| status_entrega | enum | `programada`, `enviada`, `entregue`, `lida`, `falhou`, `cancelada` |
+| status_entrega | enum | `programada`, `aguardando_vez` (há outra pergunta aberta no mesmo número), `enviada`, `entregue`, `lida`, `falhou`, `cancelada` |
 | espera_resposta | bool | |
 | respondida_em | timestamptz null | |
 | resposta | text null | ex.: `confirmou`, `remarcar`, `cancelar`, `quero_agendar` |
@@ -416,6 +435,8 @@ nova mensagem depois disso abre nova conversa.
 | dados_coletados | jsonb | respostas parciais do fluxo (nome, CPF digitado, horário escolhido…) |
 | tentativas_nao_entendidas | int | após 2 → encaminha |
 | identidade_validada | bool | passou pela validação nesta conversa |
+| paciente_em_foco_id | FK pacientes null | paciente escolhido no número compartilhado (muda se o usuário trocar de paciente) |
+| tentativas_verificacao | int | 3 falhas → bloqueio de 30 min |
 | agendamento_id | FK null | agendamento em foco (quando veio de uma mensagem dele) |
 | expira | bool | false para contato ativo |
 | atendente_id | FK usuarios null | quem assumiu |
@@ -489,7 +510,7 @@ depender da **equipe** ou do **paciente** (mensagem 8.3).
 |---|---|---|
 | id | uuid PK | |
 | paciente_id | FK | |
-| tipo | enum | `agendar` (definir data de solicitação ou remarcação), `validar_telefone`, `ligar_sem_resposta`, `conferir_dados`, `paciente_enviar_documento`, `paciente_enviar_informacao`, `outro` |
+| tipo | enum | `agendar` (definir data de solicitação ou remarcação), `validar_telefone`, `validar_documento` (cadastro novo criado pelo bot), `ligar_sem_resposta`, `conferir_dados`, `paciente_enviar_documento`, `paciente_enviar_informacao`, `outro` |
 | responsavel | enum | `equipe`, `paciente` |
 | equipe_id | FK | equipe que acompanha (mesmo quando depende do paciente) |
 | solicitacao_paciente | text null | texto de `{{pendencia_descricao}}` ("cópia do exame de sangue") |

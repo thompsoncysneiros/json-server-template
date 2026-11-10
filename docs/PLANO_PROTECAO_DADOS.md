@@ -435,9 +435,10 @@ tudo no log de eliminações. Relatório mensal para a Supervisão.
 |---|---|
 | **Pesquisa – fibrilação atrial** (art. 13) | Uso dos dados para pesquisa só com projeto aprovado em Comitê de Ética (CEP/CONEP), dentro do órgão de pesquisa, em ambiente controlado e, sempre que possível, **anonimizados ou pseudonimizados**; resultados nunca revelam dados pessoais. A fila da equipe de pesquisa no sistema serve ao **atendimento**, não à extração de dados para estudo |
 | **Crianças e adolescentes** (art. 14) | Atender ao melhor interesse; comunicação com o responsável legal; identificar o responsável no cadastro e nas observações |
-| **Familiar/representante falando pelo paciente** | Só recebe informações após confirmação de CPF + data de nascimento do paciente; dúvida → equipe confirma vínculo antes de qualquer informação |
-| **Número compartilhado** (vários pacientes no mesmo telefone) | O bot pergunta de quem se trata antes de qualquer informação |
-| **Troca de número** | Pendente até a equipe validar com documento |
+| **Familiar/cuidador falando pelo paciente** | Comum em idosos. O telefone é registrado com a **relação** (cuidador, familiar) e o nome de quem atende. Recebe informações só após a verificação do paciente (data de nascimento em telefone validado; CPF + data de nascimento nos demais casos). Dúvida → equipe confirma o vínculo |
+| **Número compartilhado** (vários pacientes no mesmo telefone) | O bot lista só **primeiro nome + inicial do sobrenome** e verifica a data de nascimento do escolhido; toda mensagem ativa diz de qual paciente se trata; uma pergunta aberta por vez no número, para não misturar respostas |
+| **Troca de número / cadastro novo pelo bot** | Exige **foto de documento oficial com foto e CPF**; o número ou cadastro fica pendente até a equipe conferir; antes disso, nenhum dado é informado |
+| **Tentativas de verificação** | 3 falhas → bloqueio de 30 min e aviso à equipe; tentativas registradas sem guardar o valor digitado |
 | **Decisões automatizadas** (art. 20) | O bot apenas organiza e prioriza; nenhuma decisão de acesso a atendimento é tomada sem humano |
 | **Dados de terceiros nas conversas** | Não são cadastrados; se relevantes, registrados de forma mínima em observação |
 | **Pedidos de autoridades** | Encaminhados ao DPO/jurídico; atendidos só com fundamento legal; registrados |

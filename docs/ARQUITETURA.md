@@ -117,7 +117,7 @@ procape-saude-digital/
 │   │       │   ├── interpretador.ts          # normaliza resposta: número da opção ou palavras-chave ("atendente", "cancelar")
 │   │       │   ├── fluxos/
 │   │       │   │   ├── inicio.ts             # aviso LGPD + identificação pelo número
-│   │       │   │   ├── identificacao.ts      # CPF + data de nascimento, troca de telefone
+│   │       │   │   ├── identificacao.ts      # telefone como filtro → casos A–F (REQUISITOS 4.1.1), número compartilhado, documento
 │   │       │   │   ├── servico.ts            # qual serviço
 │   │       │   │   ├── menu.ts               # 6 opções (lista)
 │   │       │   │   ├── solicitacao.ts        # coleta dados, prontuário opcional, registra pedido p/ equipe
@@ -244,7 +244,13 @@ sequenceDiagram
   nunca tem texto fixo para o paciente (a Supervisão edita sem deploy).
 - Encaminhamento fora do expediente (`horarios_atendimento`/`feriados`) →
   mensagem 10 além da 11.
-- Ação sensível exige `identidade_validada`.
+- Ação sensível exige `identidade_validada` (verificação da 4.1.1 do
+  `REQUISITOS.md`); 3 falhas → bloqueio de 30 min.
+- **Uma pergunta aberta por número:** o envio de uma mensagem que espera
+  resposta para um telefone que já tem pergunta aberta fica em espera
+  (`comunicacoes.status_entrega = aguardando_vez`) até a anterior ser
+  respondida ou encaminhada. Em números compartilhados, toda mensagem ativa
+  começa com "Esta mensagem é sobre *{{nome_curto}}*".
 - O bot nunca envia dados pessoais; mensagens só com primeiro nome, data,
   hora e link.
 - Toda mensagem com opções termina no formato padrão numerado; o

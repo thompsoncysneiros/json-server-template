@@ -342,15 +342,9 @@ servidor.
    consentimento: o tratamento de dados de saúde para o atendimento tem base
    legal na tutela da saúde (LGPD, art. 11, II, "f"), então o atendimento
    não depende de o paciente "aceitar".
-2. **Identificar o paciente quando possível**: procurar o número do WhatsApp
-   no cadastro.
-   - Número conhecido → cumprimentar pelo primeiro nome e pedir **validação**
-     (data de nascimento) antes de qualquer ação.
-   - Número desconhecido → pedir **CPF** + **data de
-     nascimento**.
-     - Encontrado com outro telefone → perguntar se deseja atualizar o número;
-       a troca fica **pendente de validação da equipe** (foto de documento).
-     - Não encontrado → seguir como paciente novo (coleta na seção 4.3).
+2. **Identificar o paciente pelo telefone primeiro** – antes de pedir
+   qualquer dado, o número que escreveu é confrontado com o cadastro
+   (seção 4.1.1).
 3. **Identificar o serviço** (seção 2): Pré-cateterismo, Pós-angioplastia,
    Fibrilação atrial, Aconselhamento genético, Outros.
 4. **Apresentar o menu**:
@@ -379,35 +373,103 @@ Como podemos ajudar?
 > são **opções numeradas**, e o paciente responde com o número (ou a
 > palavra, ex.: "cancelar").
 
+### 4.1.1 Identificação pelo telefone e verificação de identidade
+
+**Telefone validado** = número que a equipe confirmou como de contato do
+paciente (cadastro feito pela equipe, documento conferido ou identidade já
+confirmada pelo próprio paciente no bot). Números vindos da carga inicial
+começam como *não confirmados* e passam a *validados* na primeira
+verificação bem-sucedida.
+
+O telefone funciona como **filtro**: ele indica **quais cadastros podem
+estar falando**, mas **não substitui** a verificação de identidade.
+
+```mermaid
+flowchart TD
+    M[Mensagem recebida] --> T{Telefone no cadastro?}
+    T -->|validado, 1 paciente| A[Caso A]
+    T -->|validado, 2 ou mais pacientes| B[Caso B - número compartilhado]
+    T -->|não confirmado| C1[Caso C - confirmar identidade]
+    T -->|não encontrado| D[Caso D - CPF + data de nascimento]
+    D -->|CPF encontrado com outro telefone| E[Caso E - novo número]
+    D -->|CPF não encontrado| F[Caso F - cadastro novo com documento]
+```
+
+| Caso | Situação | O que o bot faz | Nível de verificação |
+|---|---|---|---|
+| **A** | Telefone **validado** ligado a **1** paciente | "Olá! Falo com *{{nome}}* ou com alguém que cuida dele(a)?" → pede a **data de nascimento** do paciente | Data de nascimento confere → segue |
+| **B** | Telefone **validado** ligado a **2 ou mais** pacientes (cuidador, familiar, número da comunidade) | "Este número está cadastrado para mais de uma pessoa. Sobre quem você quer falar?" Lista com **primeiro nome + inicial do sobrenome** (ex.: "1 – Maria S.", "2 – José S.") + "Outra pessoa" → pede a **data de nascimento** do escolhido | Data de nascimento do paciente escolhido |
+| **C** | Telefone existe, mas **não confirmado** (ex.: veio da planilha) | Pede **CPF + data de nascimento**; se conferirem com um dos cadastros ligados ao número, o telefone passa a **validado** | CPF + data de nascimento |
+| **D** | Telefone **não encontrado** | Pede **CPF + data de nascimento** e procura o cadastro | CPF + data de nascimento |
+| **E** | CPF encontrado, mas com **outro telefone** | Pergunta se é um número novo do paciente ou de alguém que cuida dele; pede **foto de documento com foto** do paciente; o número fica **pendente de validação** pela equipe | Documento conferido pela equipe |
+| **F** | CPF **não encontrado** (primeiro contato / criação do cadastro) | Pede nome completo e **foto de documento oficial com foto e CPF** (RG, CNH ou similar); cria o cadastro como **aguardando validação** e abre pendência para a equipe | Documento conferido pela equipe |
+
+Regras:
+- **Antes da verificação, o bot não mostra nenhum dado** (nem nome completo,
+  nem consultas). No caso B, só primeiro nome + inicial, porque o número já
+  foi validado para aqueles pacientes.
+- **Cadastro novo exige documento.** Enquanto a equipe não conferir
+  (casos E e F), o bot só registra o pedido e informa que a equipe vai
+  entrar em contato – não informa consultas nem confirma dados.
+- Ações sensíveis (alterar dados cadastrais, trocar telefone, "meus dados"
+  – direitos do titular) exigem **CPF + data de nascimento** mesmo em
+  telefone validado.
+- **3 tentativas erradas** de verificação → a conversa é bloqueada por
+  30 min, a equipe é avisada e a tentativa fica registrada (segurança).
+- A verificação vale **para a conversa atual**; ao encerrar (travas da
+  seção 4.11), a próxima conversa verifica de novo.
+- No número compartilhado, ao trocar de paciente na mesma conversa
+  ("quero falar sobre a Maria agora"), o bot volta à escolha e pede a data
+  de nascimento do novo paciente.
+
+**Número compartilhado – cadastro e envios:**
+- O mesmo telefone pode estar ligado a vários pacientes. Para cada ligação,
+  a equipe registra a **relação**: *próprio paciente*, *responsável/cuidador*,
+  *familiar*, *outro* – e, opcionalmente, o **nome de quem atende** naquele
+  número (ex.: "Ana – filha").
+- **Toda mensagem enviada pelo PROCAPE a um número compartilhado começa
+  dizendo de quem se trata**: "Esta mensagem é sobre *Maria S.*".
+- **Uma pergunta por vez por número:** se houver duas confirmações para o
+  mesmo telefone (ex.: duas pessoas da mesma casa), a segunda só é enviada
+  depois que a primeira for respondida (ou encaminhada à equipe). Assim, um
+  "1 – Confirmo" nunca fica ambíguo.
+- Na ficha do paciente, a equipe vê quais outros pacientes compartilham o
+  número.
+
 ### 4.2 Paciente que já recebeu mensagem do PROCAPE
 Quando o paciente responde a uma mensagem enviada pela equipe (agendamento,
-lembrete, primeiro contato da regulação), o bot **já sabe quem é e de qual
-agendamento se trata** – não pede identificação completa nem pergunta qual
-consulta, apenas valida (data de nascimento) quando houver ação sensível.
+lembrete, primeiro contato da regulação), o bot **já sabe de qual paciente e
+de qual agendamento se trata** (é a pergunta aberta naquele número – ver
+"uma pergunta por vez" em 4.1.1).
+- Respostas simples à pergunta enviada (*Confirmo*, *Preciso remarcar*,
+  *Quero agendar*) são aceitas sem nova verificação, pois não revelam dados.
+- Antes de **mostrar qualquer informação** ou fazer **ação sensível**
+  (cancelar, alterar dados), aplica a verificação da seção 4.1.1.
 
 ### 4.3 Solicitação de agendamento (opção 1)
 O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe
 define dia e hora na plataforma.
-1. Identificar o tipo de teleconsulta / serviço.
-2. Nome completo.
-3. **CPF** – único identificador aceito; o bot valida os dígitos
-   verificadores antes de buscar. Quem não souber o CPF é encaminhado para a
-   equipe.
-4. Data de nascimento.
-5. Telefone: **confirmar** o número do WhatsApp em uso ("este é o melhor
-   número para contato?") em vez de pedir de novo.
-6. Verificar cadastro existente (CPF + data de nascimento); se
-   não existir, criar o pré-cadastro.
-7. Perguntar, de forma **opcional**, o número do prontuário ("Se você já é
+1. Identificação conforme 4.1.1 (telefone primeiro; CPF + data de
+   nascimento só quando o telefone não resolve). O **CPF** é o único
+   identificador aceito; o bot valida os dígitos. Quem não souber o CPF é
+   encaminhado para a equipe.
+2. Identificar o tipo de teleconsulta / serviço.
+3. **Paciente sem cadastro** (caso F): nome completo + **foto de documento
+   oficial com foto e CPF** – obrigatório para criar o cadastro; o cadastro
+   fica *aguardando validação* até a equipe conferir.
+4. Telefone: **confirmar** o número do WhatsApp em uso ("este é o melhor
+   número para contato?") e a relação (próprio paciente ou cuidador).
+5. Perguntar, de forma **opcional**, o número do prontuário ("Se você já é
    paciente do PROCAPE e sabe o número do seu prontuário, informe; se não,
    responda *0*").
-8. Registrar a **solicitação de agendamento** (status 🟣 `solicitado`) e criar
+6. Registrar a **solicitação de agendamento** (status 🟣 `solicitado`) e criar
    a pendência "agendar" para a equipe do serviço.
-9. Informar ao paciente que a solicitação foi recebida e que **a equipe
+7. Informar ao paciente que a solicitação foi recebida e que **a equipe
    enviará a data e o horário por este WhatsApp** – o bot **nunca informa
    que o agendamento foi realizado** antes de a equipe definir a data.
-10. Quando a equipe salvar o agendamento, o bot envia a confirmação
-    (seção 4.6).
+8. Quando a equipe salvar o agendamento, o bot envia a confirmação
+   (seção 4.6). Se o cadastro ainda estiver aguardando validação do
+   documento, a equipe valida antes de agendar.
 
 ### 4.4 Prontuário
 - O prontuário é **apenas um número, não obrigatório**: preenchido quando o
