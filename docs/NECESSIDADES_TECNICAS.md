@@ -32,8 +32,8 @@ II). Todas as decisões de infraestrutura abaixo seguem o
 | **1. Início** | **Oracle Cloud – Always Free (Free Tier)**, região **Brasil (São Paulo)** | Definido |
 | **2. Migração (se autorizada)** | Servidor disponibilizado pela **ATI-PE / UPE** | Depende de autorização da ATI |
 
-O modelo de produção (seção 5) foi escolhido para que a migração da fase 1
-para a fase 2 seja simples e sem perda de dados.
+A mesma instalação (seção 5) é usada nas duas fases, para que a migração
+seja simples e sem perda de dados.
 
 ### O que solicitamos à ATI / TI da UPE
 | # | Pedido | Seção |
@@ -190,43 +190,30 @@ dados de pacientes.
 
 ---
 
-## 5. Modelo de produção – Docker ou instalação direta?
+## 5. Modelo de produção
 
-### 5.1 Avaliação
-| Critério | Tudo em Docker | Tudo instalado direto | **Híbrido (escolhido)** |
-|---|---|---|---|
-| Atualizações de segurança | Imagens precisam ser reconstruídas; patches do SO não chegam aos contêineres | `unattended-upgrades` cobre tudo automaticamente | Dados e serviços expostos recebem patch automático do SO; app reconstruída semanalmente |
-| Firewall | Docker publica portas **contornando o ufw** (risco comum de exposição acidental do banco) | Firewall funciona como esperado | Nenhuma porta de contêiner publicada para fora (só `127.0.0.1`) |
-| Banco e backup | Backup/PITR dentro de contêiner é mais frágil | pgBackRest nativo, PITR, ferramentas maduras | **Banco nativo** |
-| Isolamento da aplicação | Bom | Processos dividem o mesmo ambiente | **App isolada** em contêiner sem privilégios |
-| Migração Oracle (ARM) → ATI | Fácil | Precisa reinstalar tudo à mão | Script de provisionamento + imagens multi-arquitetura |
-| Auditoria pela ATI | Exige conhecer Docker | Familiar para qualquer equipe de infra | Camada de dados familiar; app documentada |
-| Rollback de versão | Fácil (tag da imagem) | Manual | Fácil (tag da imagem) |
+| Camada | Tecnologia | Forma de instalação |
+|---|---|---|
+| Servidor web / HTTPS / painel | Nginx + Certbot | Pacote do sistema operacional |
+| Banco de dados | PostgreSQL 16 | Pacote do sistema operacional |
+| Filas e agendamentos | Redis 7 | Pacote do sistema operacional |
+| Antivírus dos anexos | ClamAV | Pacote do sistema operacional |
+| Backup | pgBackRest (banco) + restic (anexos) | Pacote do sistema operacional |
+| Firewall e proteção SSH | ufw + fail2ban | Pacote do sistema operacional |
+| Aplicação (API, worker, gateway do WhatsApp) | Node.js 22 LTS | **Contêineres Docker** (Docker Engine + Docker Compose) |
+| Painel (React) | Arquivos estáticos | Servidos pelo Nginx |
+| Provisionamento do servidor | Ansible | Script versionado, o mesmo na Oracle e na ATI |
 
-### 5.2 Decisão: modelo híbrido
-- **Instalados no sistema operacional (pacotes oficiais, atualização
-  automática):** Nginx, PostgreSQL 16, Redis 7, ClamAV, Certbot,
-  pgBackRest, restic, ufw, fail2ban.
-- **Em contêineres Docker:** apenas a aplicação (API, worker e gateway do
-  WhatsApp), com:
-  - usuário **não root** dentro do contêiner, sistema de arquivos **somente
-    leitura**, sem capacidades extras (`cap_drop: ALL`,
-    `no-new-privileges`);
-  - **nenhuma porta publicada** para a internet – a API escuta só em
-    `127.0.0.1` e o Nginx do host faz o proxy;
-  - acesso ao banco/Redis só pela rede interna do Docker, liberada no
-    `pg_hba.conf` e no Redis apenas para essa sub-rede, com senha;
-  - imagens mínimas, versionadas por tag, **reconstruídas semanalmente** e
-    verificadas contra vulnerabilidades antes da implantação;
-  - o socket do Docker **não** é montado em nenhum contêiner e só o
-    administrador pertence ao grupo `docker`.
-- O painel (React) é publicado como arquivos estáticos servidos pelo Nginx
-  do host.
-- Todo o provisionamento do servidor fica em **script versionado** (Ansible),
-  usado igualmente na Oracle e na ATI.
-
-Resultado: os **dados** ficam na camada mais simples de proteger, atualizar e
-auditar, e a **aplicação** mantém o isolamento e a portabilidade do Docker.
+Requisitos de configuração dos contêineres:
+- usuário não root, sistema de arquivos somente leitura, sem capacidades
+  extras (`cap_drop: ALL`, `no-new-privileges`);
+- nenhuma porta publicada para a internet (a API escuta só em `127.0.0.1`;
+  o Nginx faz o proxy);
+- acesso ao banco e ao Redis apenas pela rede interna do Docker, com senha;
+- imagens multi-arquitetura (ARM e x86), versionadas por tag e reconstruídas
+  semanalmente com verificação de vulnerabilidades;
+- socket do Docker não montado em contêineres; só o administrador no grupo
+  `docker`.
 
 ---
 
