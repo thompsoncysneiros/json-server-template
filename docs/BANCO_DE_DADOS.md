@@ -192,8 +192,7 @@ com trigram para busca por nome.
 Índice em `numero` (não único) – é por ele que o bot filtra os possíveis
 pacientes ao receber mensagem (`REQUISITOS.md` 4.1.1). Um mesmo número pode
 pertencer a **vários pacientes** (cuidador de idosos, familiar, número da
-comunidade): nesse caso o bot pergunta sobre quem se trata e verifica a
-data de nascimento do escolhido.
+comunidade): o **CPF**, sempre pedido, define o paciente.
 
 ### `verificacoes_identidade`
 Registro de cada tentativa de verificação no bot (segurança e auditoria).
@@ -203,7 +202,7 @@ Registro de cada tentativa de verificação no bot (segurança e auditoria).
 | conversa_id | FK | |
 | telefone | varchar(20) | |
 | paciente_id | FK null | paciente que se tentou verificar |
-| metodo | enum | `data_nascimento`, `cpf_data_nascimento`, `documento` |
+| metodo | enum | `cpf_data_nascimento`, `documento` |
 | resultado | enum | `sucesso`, `falha`, `bloqueado` (3 falhas → 30 min) |
 | criado_em | timestamptz | |
 
@@ -435,7 +434,7 @@ nova mensagem depois disso abre nova conversa.
 | dados_coletados | jsonb | respostas parciais do fluxo (nome, CPF digitado, horário escolhido…) |
 | tentativas_nao_entendidas | int | após 2 → encaminha |
 | identidade_validada | bool | passou pela validação nesta conversa |
-| paciente_em_foco_id | FK pacientes null | paciente escolhido no número compartilhado (muda se o usuário trocar de paciente) |
+| paciente_em_foco_id | FK pacientes null | paciente verificado pelo CPF nesta conversa (muda se o usuário trocar de paciente, com nova verificação) |
 | tentativas_verificacao | int | 3 falhas → bloqueio de 30 min |
 | agendamento_id | FK null | agendamento em foco (quando veio de uma mensagem dele) |
 | expira | bool | false para contato ativo |

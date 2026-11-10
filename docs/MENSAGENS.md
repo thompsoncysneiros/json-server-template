@@ -87,9 +87,7 @@ Variáveis: `{{nome}}`, `{{nome_curto}}` (primeiro nome + inicial do sobrenome),
 | 11 | `geral.encaminhado_equipe` | Todos | Falar com a equipe / encaminhamento | Resposta | – |
 | 12 | `geral.nao_entendido` | Todos | Resposta não reconhecida | Resposta | Menu de 6 opções |
 | M | `geral.menu` | Todos | Paciente inicia conversa | Resposta | Menu de 6 opções |
-| ID-A | `ident.confirmar_paciente` | Todos | Telefone validado com 1 paciente (caso A) | Resposta | – (pede data de nascimento) |
-| ID-B | `ident.escolher_paciente` | Todos | Telefone validado com 2+ pacientes (caso B) | Resposta | Pacientes (primeiro nome + inicial) · Outra pessoa |
-| ID-C | `ident.pedir_cpf` | Todos | Telefone não confirmado ou não encontrado (casos C/D) | Resposta | – (CPF e depois data de nascimento) |
+| ID-C | `ident.pedir_cpf` | Todos | Sempre, no início da identificação | Resposta | – (CPF e depois data de nascimento) |
 | ID-F | `ident.pedir_documento` | Todos | Cadastro novo ou número novo (casos E/F) | Resposta | – (foto do documento) |
 | ID-X | `ident.falha` | Todos | Dado não confere / 3 falhas | Resposta | – |
 | A | `geral.aviso_privacidade` | Todos | Primeiro contato do número | Resposta | Entendi |
@@ -436,27 +434,14 @@ nome.
 
 ### Mensagens de identificação (ver `REQUISITOS.md` 4.1.1)
 
-**ID-A `ident.confirmar_paciente`** – telefone validado, 1 paciente
+**ID-C `ident.pedir_cpf`** – sempre, no início da identificação
 ```
 Olá! 🫀 Aqui é da equipe de Saúde Digital do PROCAPE.
-Falo com *{{nome_curto}}* ou com alguém que cuida dele(a)?
-Para sua segurança, informe a *data de nascimento* do(a) paciente (ex.: 05/03/1958).
+Para sua segurança, informe o *CPF do(a) paciente* (somente números).
 ```
-
-**ID-B `ident.escolher_paciente`** – telefone validado, vários pacientes
-```
-Olá! 🫀 Aqui é da equipe de Saúde Digital do PROCAPE.
-Este número está cadastrado para mais de uma pessoa. Sobre quem você quer falar?
-```
-Opções: uma por paciente (`1️⃣ Maria S.`, `2️⃣ José S.`…) + **Outra pessoa**.
-Em seguida, pede a data de nascimento do paciente escolhido.
-
-**ID-C `ident.pedir_cpf`** – telefone não confirmado ou desconhecido
-```
-Olá! 🫀 Aqui é da equipe de Saúde Digital do PROCAPE.
-Para localizarmos o cadastro, informe o *CPF do(a) paciente* (somente números).
-```
-Depois: "Agora informe a *data de nascimento* do(a) paciente."
+Depois: "Agora informe a *data de nascimento* do(a) paciente (ex.:
+05/03/1958)." Em número compartilhado, o CPF informado define sobre qual
+paciente é a conversa – nenhum nome é listado.
 
 **ID-F `ident.pedir_documento`** – cadastro novo ou número novo
 ```

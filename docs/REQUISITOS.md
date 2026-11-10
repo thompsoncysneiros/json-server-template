@@ -342,9 +342,9 @@ servidor.
    consentimento: o tratamento de dados de saúde para o atendimento tem base
    legal na tutela da saúde (LGPD, art. 11, II, "f"), então o atendimento
    não depende de o paciente "aceitar".
-2. **Identificar o paciente pelo telefone primeiro** – antes de pedir
-   qualquer dado, o número que escreveu é confrontado com o cadastro
-   (seção 4.1.1).
+2. **Identificar o paciente**: o telefone é confrontado com o cadastro
+   (filtro) e o **CPF é sempre pedido**, com a data de nascimento (seção
+   4.1.1).
 3. **Identificar o serviço** (seção 2): Pré-cateterismo, Pós-angioplastia,
    Fibrilação atrial, Aconselhamento genético, Outros.
 4. **Apresentar o menu**:
@@ -381,46 +381,55 @@ confirmada pelo próprio paciente no bot). Números vindos da carga inicial
 começam como *não confirmados* e passam a *validados* na primeira
 verificação bem-sucedida.
 
-O telefone funciona como **filtro**: ele indica **quais cadastros podem
-estar falando**, mas **não substitui** a verificação de identidade.
+O **CPF é sempre pedido** – é o identificador único do paciente. O
+telefone funciona como **filtro**: indica quais cadastros estão ligados
+àquele número e define se é preciso documento, mas **nunca substitui o
+CPF**.
 
 ```mermaid
 flowchart TD
-    M[Mensagem recebida] --> T{Telefone no cadastro?}
-    T -->|validado, 1 paciente| A[Caso A]
-    T -->|validado, 2 ou mais pacientes| B[Caso B - número compartilhado]
-    T -->|não confirmado| C1[Caso C - confirmar identidade]
-    T -->|não encontrado| D[Caso D - CPF + data de nascimento]
-    D -->|CPF encontrado com outro telefone| E[Caso E - novo número]
-    D -->|CPF não encontrado| F[Caso F - cadastro novo com documento]
+    M[Mensagem recebida] --> T[Busca os cadastros ligados ao telefone]
+    T --> CPF[Pede o CPF - sempre]
+    CPF --> DN[Pede a data de nascimento]
+    DN --> Q{CPF e data conferem?}
+    Q -->|não| X[Falha - nova tentativa / bloqueio na 3ª]
+    Q -->|sim, CPF ligado a este telefone validado| A[Caso A - segue]
+    Q -->|sim, CPF ligado a este telefone não confirmado| C[Caso C - segue e valida o telefone]
+    Q -->|sim, CPF não ligado a este telefone| E[Caso E - número novo: documento]
+    CPF -->|CPF não existe no sistema| F[Caso F - cadastro novo: documento]
 ```
 
-| Caso | Situação | O que o bot faz | Nível de verificação |
+| Caso | Situação | O que o bot faz | Verificação |
 |---|---|---|---|
-| **A** | Telefone **validado** ligado a **1** paciente | "Olá! Falo com *{{nome}}* ou com alguém que cuida dele(a)?" → pede a **data de nascimento** do paciente | Data de nascimento confere → segue |
-| **B** | Telefone **validado** ligado a **2 ou mais** pacientes (cuidador, familiar, número da comunidade) | "Este número está cadastrado para mais de uma pessoa. Sobre quem você quer falar?" Lista com **primeiro nome + inicial do sobrenome** (ex.: "1 – Maria S.", "2 – José S.") + "Outra pessoa" → pede a **data de nascimento** do escolhido | Data de nascimento do paciente escolhido |
-| **C** | Telefone existe, mas **não confirmado** (ex.: veio da planilha) | Pede **CPF + data de nascimento**; se conferirem com um dos cadastros ligados ao número, o telefone passa a **validado** | CPF + data de nascimento |
-| **D** | Telefone **não encontrado** | Pede **CPF + data de nascimento** e procura o cadastro | CPF + data de nascimento |
-| **E** | CPF encontrado, mas com **outro telefone** | Pergunta se é um número novo do paciente ou de alguém que cuida dele; pede **foto de documento com foto** do paciente; o número fica **pendente de validação** pela equipe | Documento conferido pela equipe |
-| **F** | CPF **não encontrado** (primeiro contato / criação do cadastro) | Pede nome completo e **foto de documento oficial com foto e CPF** (RG, CNH ou similar); cria o cadastro como **aguardando validação** e abre pendência para a equipe | Documento conferido pela equipe |
+| **A** | CPF pertence a um paciente **ligado a este telefone validado** (inclusive número compartilhado por vários pacientes) | Segue o atendimento sobre esse paciente | CPF + data de nascimento |
+| **C** | CPF pertence a um paciente ligado a este telefone, mas o telefone está **não confirmado** (ex.: veio da planilha) | Segue e o telefone passa a **validado** | CPF + data de nascimento |
+| **E** | CPF existe, mas **não está ligado a este telefone** | Pergunta se é número novo do paciente ou de quem cuida dele; pede **foto de documento oficial com foto**; o número fica **pendente de validação** | CPF + data de nascimento + documento conferido pela equipe |
+| **F** | CPF **não existe** no sistema (primeiro contato / criação do cadastro) | Pede nome completo, data de nascimento e **foto de documento oficial com foto e CPF**; cria o cadastro como **aguardando validação** | Documento conferido pela equipe |
+
+Para que serve o telefone, então:
+- **Número compartilhado** (vários pacientes no mesmo número): o CPF
+  informado escolhe o paciente – o bot **não lista nomes**, nem
+  abreviados.
+- **Documento:** só é exigido quando o telefone não está ligado ao CPF
+  (casos E e F).
+- **Pergunta aberta:** se a pessoa está respondendo a uma mensagem do
+  PROCAPE, o bot já sabe a qual paciente ela se refere (seção 4.2).
 
 Regras:
-- **Antes da verificação, o bot não mostra nenhum dado** (nem nome completo,
-  nem consultas). No caso B, só primeiro nome + inicial, porque o número já
-  foi validado para aqueles pacientes.
-- **Cadastro novo exige documento.** Enquanto a equipe não conferir
-  (casos E e F), o bot só registra o pedido e informa que a equipe vai
-  entrar em contato – não informa consultas nem confirma dados.
-- Ações sensíveis (alterar dados cadastrais, trocar telefone, "meus dados"
-  – direitos do titular) exigem **CPF + data de nascimento** mesmo em
-  telefone validado.
-- **3 tentativas erradas** de verificação → a conversa é bloqueada por
-  30 min, a equipe é avisada e a tentativa fica registrada (segurança).
-- A verificação vale **para a conversa atual**; ao encerrar (travas da
-  seção 4.11), a próxima conversa verifica de novo.
-- No número compartilhado, ao trocar de paciente na mesma conversa
-  ("quero falar sobre a Maria agora"), o bot volta à escolha e pede a data
-  de nascimento do novo paciente.
+- **Antes da verificação, o bot não mostra nenhum dado** – nem nome, nem
+  consultas.
+- O bot valida os **dígitos verificadores do CPF** antes de buscar; CPF
+  inválido conta como tentativa errada. Quem não souber o CPF é encaminhado
+  para a equipe.
+- **Cadastro novo e número novo exigem documento.** Enquanto a equipe não
+  conferir (casos E e F), o bot só registra o pedido e informa que a equipe
+  vai entrar em contato – não informa consultas nem confirma dados.
+- **3 tentativas erradas** → conversa bloqueada por 30 min, equipe avisada,
+  tentativa registrada (sem guardar o que foi digitado).
+- A verificação vale **para a conversa atual** e **para o paciente
+  verificado**; ao encerrar (travas da seção 4.11) ou ao trocar de paciente
+  ("agora quero falar sobre a Maria"), o bot pede o CPF e a data de
+  nascimento de novo.
 
 **Número compartilhado – cadastro e envios:**
 - O mesmo telefone pode estar ligado a vários pacientes. Para cada ligação,
@@ -428,7 +437,9 @@ Regras:
   *familiar*, *outro* – e, opcionalmente, o **nome de quem atende** naquele
   número (ex.: "Ana – filha").
 - **Toda mensagem enviada pelo PROCAPE a um número compartilhado começa
-  dizendo de quem se trata**: "Esta mensagem é sobre *Maria S.*".
+  dizendo de quem se trata**: "Esta mensagem é sobre *Maria S.*" – só
+  para números **validados** para aquele paciente; ao responder com algo
+  além da opção pedida, o bot pede o CPF.
 - **Uma pergunta por vez por número:** se houver duas confirmações para o
   mesmo telefone (ex.: duas pessoas da mesma casa), a segunda só é enviada
   depois que a primeira for respondida (ou encaminhada à equipe). Assim, um
@@ -444,15 +455,15 @@ de qual agendamento se trata** (é a pergunta aberta naquele número – ver
 - Respostas simples à pergunta enviada (*Confirmo*, *Preciso remarcar*,
   *Quero agendar*) são aceitas sem nova verificação, pois não revelam dados.
 - Antes de **mostrar qualquer informação** ou fazer **ação sensível**
-  (cancelar, alterar dados), aplica a verificação da seção 4.1.1.
+  (cancelar, alterar dados), pede **CPF + data de nascimento** (seção
+  4.1.1).
 
 ### 4.3 Solicitação de agendamento (opção 1)
 O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe
 define dia e hora na plataforma.
-1. Identificação conforme 4.1.1 (telefone primeiro; CPF + data de
-   nascimento só quando o telefone não resolve). O **CPF** é o único
-   identificador aceito; o bot valida os dígitos. Quem não souber o CPF é
-   encaminhado para a equipe.
+1. Identificação conforme 4.1.1: **CPF sempre** (identificador único) +
+   data de nascimento; o telefone filtra os cadastros e define se é preciso
+   documento. Quem não souber o CPF é encaminhado para a equipe.
 2. Identificar o tipo de teleconsulta / serviço.
 3. **Paciente sem cadastro** (caso F): nome completo + **foto de documento
    oficial com foto e CPF** – obrigatório para criar o cadastro; o cadastro

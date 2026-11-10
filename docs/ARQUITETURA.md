@@ -117,7 +117,7 @@ procape-saude-digital/
 │   │       │   ├── interpretador.ts          # normaliza resposta: número da opção ou palavras-chave ("atendente", "cancelar")
 │   │       │   ├── fluxos/
 │   │       │   │   ├── inicio.ts             # aviso LGPD + identificação pelo número
-│   │       │   │   ├── identificacao.ts      # telefone como filtro → casos A–F (REQUISITOS 4.1.1), número compartilhado, documento
+│   │       │   │   ├── identificacao.ts      # CPF sempre + data de nascimento; telefone filtra e define se exige documento (REQUISITOS 4.1.1)
 │   │       │   │   ├── servico.ts            # qual serviço
 │   │       │   │   ├── menu.ts               # 6 opções (lista)
 │   │       │   │   ├── solicitacao.ts        # coleta dados, prontuário opcional, registra pedido p/ equipe
