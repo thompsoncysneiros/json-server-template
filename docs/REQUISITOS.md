@@ -385,8 +385,8 @@ Duas regras centrais:
 1. **O telefone é um validador cadastral**: indica quais pacientes estão
    ligados (liberados) para aquele número.
 2. **Para falar sobre qualquer paciente, o bot pede sempre CPF + data de
-   nascimento** – inclusive em número já liberado e inclusive para responder
-   a uma mensagem enviada pelo PROCAPE.
+   nascimento** – inclusive em número já liberado. **Única exceção:** a
+   resposta às opções da própria mensagem enviada pelo PROCAPE (seção 4.2).
 
 Se o CPF/data conferem **e** o número está liberado para aquele paciente, o
 atendimento segue. Se o número **não** está liberado para o paciente, exige
@@ -418,9 +418,9 @@ Para que serve o telefone, então:
   abreviados.
 - **Documento:** só é exigido quando o telefone não está ligado ao CPF
   (casos E e F).
-- **Pergunta aberta:** se a pessoa está respondendo a uma mensagem do
-  PROCAPE, o bot já sabe a qual paciente ela se refere, mas **ainda assim
-  pede CPF + data de nascimento** antes de registrar a resposta (4.2).
+- **Pergunta aberta:** se a pessoa responde com uma das opções da mensagem
+  enviada pelo PROCAPE, o bot já sabe a qual paciente e agendamento ela se
+  refere e **registra a resposta sem pedir CPF** (4.2).
 
 Regras:
 - **Antes da verificação, o bot não mostra nenhum dado** – nem nome, nem
@@ -470,8 +470,9 @@ Quando alguém escreve de um número **não liberado** para o paciente (caso E):
   número (ex.: "Ana – filha").
 - **Toda mensagem enviada pelo PROCAPE a um número compartilhado começa
   dizendo de quem se trata**: "Esta mensagem é sobre *Maria S.*" – só
-  para números **liberados** para aquele paciente. Antes de registrar a
-  resposta, o bot pede CPF + data de nascimento (4.2).
+  para números **liberados** para aquele paciente. A resposta com uma das
+  opções é aceita sem CPF; qualquer outra coisa pede CPF + data de
+  nascimento (4.2).
 - **Uma pergunta por vez por número:** se houver duas confirmações para o
   mesmo telefone (ex.: duas pessoas da mesma casa), a segunda só é enviada
   depois que a primeira for respondida (ou encaminhada à equipe). Assim, um
@@ -484,12 +485,16 @@ Quando o paciente responde a uma mensagem enviada pela equipe (agendamento,
 lembrete, primeiro contato da regulação), o bot **já sabe de qual paciente e
 de qual agendamento se trata** (é a pergunta aberta naquele número – ver
 "uma pergunta por vez" em 4.1.1).
-- Antes de registrar **qualquer** resposta (inclusive *Confirmo*,
-  *Preciso remarcar*, *Quero agendar*), o bot pede **CPF + data de
-  nascimento** do paciente (seção 4.1.1). Depois de verificado, a pessoa
-  pode fazer várias ações na mesma conversa sem repetir a verificação.
-- A resposta dada antes da verificação (ex.: "1") fica guardada e é aplicada
-  logo após a verificação, sem precisar repetir.
+- **Resposta às opções da própria mensagem** (*Confirmo minha presença*,
+  *Preciso remarcar*, *Cancelar*, *Quero agendar*, *Quero remarcar*) é
+  registrada **sem pedir CPF**: a mensagem foi enviada pelo PROCAPE a um
+  número liberado para aquele paciente, e a resposta não revela dados. O
+  cancelamento continua com a pergunta de confirmação ("Tem certeza?").
+- **Qualquer coisa além das opções** – texto livre, pedido de informação,
+  menu, alteração de dados, envio de documentos – exige **CPF + data de
+  nascimento** antes de seguir (seção 4.1.1). Depois de verificado, a
+  pessoa pode fazer várias ações na mesma conversa sem repetir a
+  verificação.
 
 ### 4.3 Solicitação de agendamento (opção 1)
 O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe

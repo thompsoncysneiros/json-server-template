@@ -439,7 +439,7 @@ tudo no log de eliminações. Relatório mensal para a Supervisão.
 | **Número compartilhado** (vários pacientes no mesmo telefone) | O **CPF informado escolhe o paciente** (nenhum nome é listado) e a data de nascimento confirma; toda mensagem ativa diz de qual paciente se trata; uma pergunta aberta por vez no número, para não misturar respostas |
 | **Número novo pedindo atendimento de um paciente** | CPF + data de nascimento e **foto da identidade do paciente**; o atendimento fica suspenso até a equipe **liberar o número para aquele paciente**; a liberação é registrada (quem, quando) e a foto é apagada após a decisão |
 | **Cadastro novo pelo bot** | Exige **foto de documento oficial com foto e CPF**; cadastro aguardando validação até a equipe conferir; antes disso, nenhum dado é informado |
-| **Verificação em toda conversa** | Para falar sobre qualquer paciente, sempre CPF + data de nascimento – o número liberado não dispensa a verificação |
+| **Verificação em toda conversa** | Para falar sobre qualquer paciente, sempre CPF + data de nascimento – o número liberado não dispensa a verificação. Exceção: resposta às opções da própria mensagem enviada pelo PROCAPE a um número liberado (não revela dados) |
 | **Tentativas de verificação** | 3 falhas → bloqueio de 30 min e aviso à equipe; tentativas registradas sem guardar o valor digitado |
 | **Decisões automatizadas** (art. 20) | O bot apenas organiza e prioriza; nenhuma decisão de acesso a atendimento é tomada sem humano |
 | **Dados de terceiros nas conversas** | Não são cadastrados; se relevantes, registrados de forma mínima em observação |
