@@ -267,7 +267,7 @@ Matriz de permissões (✅ total · 🔸 só da(s) sua(s) equipe(s) · 👁 leit
 | Fila de atendimento e chat | ✅ | ✅ | 🔸 | 🔸 |
 | Transferir atendimento entre equipes | ✅ | ✅ | ✅ | ❌ |
 | Registrar nº de prontuário | ✅ | ✅ | ✅ | 🔸 |
-| Validar troca de telefone | ✅ | ✅ | ✅ | ❌ |
+| Liberar número novo para um paciente | ✅ | ✅ | ✅ | ❌ |
 | Agenda (calendário) | ✅ | ✅ | ✅ | 🔸 |
 | Relatórios | ✅ | ✅ | 👁 básico | ❌ |
 | Exportar dados cadastrais | ✅ | ✅ | ❌ | ❌ |
@@ -381,10 +381,16 @@ confirmada pelo próprio paciente no bot). Números vindos da carga inicial
 começam como *não confirmados* e passam a *validados* na primeira
 verificação bem-sucedida.
 
-O **CPF é sempre pedido** – é o identificador único do paciente. O
-telefone funciona como **filtro**: indica quais cadastros estão ligados
-àquele número e define se é preciso documento, mas **nunca substitui o
-CPF**.
+Duas regras centrais:
+1. **O telefone é um validador cadastral**: indica quais pacientes estão
+   ligados (liberados) para aquele número.
+2. **Para falar sobre qualquer paciente, o bot pede sempre CPF + data de
+   nascimento** – inclusive em número já liberado e inclusive para responder
+   a uma mensagem enviada pelo PROCAPE.
+
+Se o CPF/data conferem **e** o número está liberado para aquele paciente, o
+atendimento segue. Se o número **não** está liberado para o paciente, exige
+**foto da identidade do paciente** e liberação pela equipe (caso E).
 
 ```mermaid
 flowchart TD
@@ -403,7 +409,7 @@ flowchart TD
 |---|---|---|---|
 | **A** | CPF pertence a um paciente **ligado a este telefone validado** (inclusive número compartilhado por vários pacientes) | Segue o atendimento sobre esse paciente | CPF + data de nascimento |
 | **C** | CPF pertence a um paciente ligado a este telefone, mas o telefone está **não confirmado** (ex.: veio da planilha) | Segue e o telefone passa a **validado** | CPF + data de nascimento |
-| **E** | CPF existe, mas **não está ligado a este telefone** | Pergunta se é número novo do paciente ou de quem cuida dele; pede **foto de documento oficial com foto**; o número fica **pendente de validação** | CPF + data de nascimento + documento conferido pela equipe |
+| **E** | CPF existe, mas o **número não está liberado** para esse paciente | Pergunta se é número novo do paciente ou de quem cuida dele; pede **foto da identidade do paciente**; o atendimento fica **suspenso** até a equipe liberar (4.1.2) | CPF + data de nascimento + identidade conferida pela equipe |
 | **F** | CPF **não existe** no sistema (primeiro contato / criação do cadastro) | Pede nome completo, data de nascimento e **foto de documento oficial com foto e CPF**; cria o cadastro como **aguardando validação** | Documento conferido pela equipe |
 
 Para que serve o telefone, então:
@@ -413,7 +419,8 @@ Para que serve o telefone, então:
 - **Documento:** só é exigido quando o telefone não está ligado ao CPF
   (casos E e F).
 - **Pergunta aberta:** se a pessoa está respondendo a uma mensagem do
-  PROCAPE, o bot já sabe a qual paciente ela se refere (seção 4.2).
+  PROCAPE, o bot já sabe a qual paciente ela se refere, mas **ainda assim
+  pede CPF + data de nascimento** antes de registrar a resposta (4.2).
 
 Regras:
 - **Antes da verificação, o bot não mostra nenhum dado** – nem nome, nem
@@ -431,6 +438,31 @@ Regras:
   ("agora quero falar sobre a Maria"), o bot pede o CPF e a data de
   nascimento de novo.
 
+### 4.1.2 Liberação de número novo pela equipe
+Quando alguém escreve de um número **não liberado** para o paciente (caso E):
+1. O bot confere CPF + data de nascimento e pede a **foto da identidade do
+   paciente** (documento oficial com foto). Pergunta também a relação com o
+   paciente (próprio, cuidador, familiar) e o nome de quem está falando.
+2. O bot informa que a equipe vai conferir e **não continua o atendimento**
+   (não mostra consultas, não registra confirmações nem pedidos).
+3. Cria a pendência **"Liberar número"** na fila da equipe, com a foto, o
+   CPF verificado, o número novo e a relação informada. A equipe é
+   notificada.
+4. A equipe confere a identidade e escolhe:
+   - **Liberar** → o número é **adicionado ao cadastro do paciente** como
+     *validado* (forma: documento conferido), com a relação informada; a
+     equipe pode marcá-lo como principal. O bot avisa que o número foi
+     liberado e **retoma o atendimento** de onde parou.
+   - **Recusar** → o bot informa que não foi possível confirmar e que a
+     equipe entrará em contato pelo telefone já cadastrado; o caso fica
+     registrado.
+5. A liberação vale **só para aquele paciente**: o mesmo número continua
+   precisando de liberação para outros pacientes.
+6. Toda liberação/recusa fica na auditoria e na linha do tempo do paciente
+   (quem liberou, quando, com qual documento).
+7. A foto da identidade é apagada após a decisão (fica só o registro de que
+   foi conferida), em linha com a minimização da LGPD.
+
 **Número compartilhado – cadastro e envios:**
 - O mesmo telefone pode estar ligado a vários pacientes. Para cada ligação,
   a equipe registra a **relação**: *próprio paciente*, *responsável/cuidador*,
@@ -438,8 +470,8 @@ Regras:
   número (ex.: "Ana – filha").
 - **Toda mensagem enviada pelo PROCAPE a um número compartilhado começa
   dizendo de quem se trata**: "Esta mensagem é sobre *Maria S.*" – só
-  para números **validados** para aquele paciente; ao responder com algo
-  além da opção pedida, o bot pede o CPF.
+  para números **liberados** para aquele paciente. Antes de registrar a
+  resposta, o bot pede CPF + data de nascimento (4.2).
 - **Uma pergunta por vez por número:** se houver duas confirmações para o
   mesmo telefone (ex.: duas pessoas da mesma casa), a segunda só é enviada
   depois que a primeira for respondida (ou encaminhada à equipe). Assim, um
@@ -452,11 +484,12 @@ Quando o paciente responde a uma mensagem enviada pela equipe (agendamento,
 lembrete, primeiro contato da regulação), o bot **já sabe de qual paciente e
 de qual agendamento se trata** (é a pergunta aberta naquele número – ver
 "uma pergunta por vez" em 4.1.1).
-- Respostas simples à pergunta enviada (*Confirmo*, *Preciso remarcar*,
-  *Quero agendar*) são aceitas sem nova verificação, pois não revelam dados.
-- Antes de **mostrar qualquer informação** ou fazer **ação sensível**
-  (cancelar, alterar dados), pede **CPF + data de nascimento** (seção
-  4.1.1).
+- Antes de registrar **qualquer** resposta (inclusive *Confirmo*,
+  *Preciso remarcar*, *Quero agendar*), o bot pede **CPF + data de
+  nascimento** do paciente (seção 4.1.1). Depois de verificado, a pessoa
+  pode fazer várias ações na mesma conversa sem repetir a verificação.
+- A resposta dada antes da verificação (ex.: "1") fica guardada e é aplicada
+  logo após a verificação, sem precisar repetir.
 
 ### 4.3 Solicitação de agendamento (opção 1)
 O bot **não agenda**: ele coleta os dados e registra a solicitação; a equipe

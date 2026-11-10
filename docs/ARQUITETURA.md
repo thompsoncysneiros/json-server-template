@@ -297,7 +297,7 @@ Remarcar ou cancelar **cancela e recria** esses jobs.
 | Pós-consulta | `POST /agendamentos/:id/realizado`, `POST /agendamentos/:id/faltou`, `POST /pacientes/:id/pendencias` (pendência do paciente → envia 8.3); `faltou` → envia 8.4 |
 | Pacientes | `GET /pacientes?busca=&servico=&status=&naoAtendidos=`, `POST /pacientes`, `GET/PATCH /pacientes/:id`, `GET /pacientes/:id/linha-do-tempo`, `GET/POST /pacientes/:id/observacoes`, `GET /pacientes/exportar-cadastro?servico=&formato=xlsx` (só dados cadastrais; Admin/Supervisão; auditado) |
 | Carga inicial | `POST /admin/carga-inicial/previa` (lê a planilha e devolve a prévia com erros), `POST /admin/carga-inicial/confirmar` – bloqueadas quando a carga inicial estiver desativada |
-| Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/validar` |
+| Telefones | `POST /pacientes/:id/telefones`, `POST /telefones/:id/liberar` (equipe libera número novo após conferir a identidade → bot retoma o atendimento), `POST /telefones/:id/recusar` |
 | Agendamentos | `GET /agendamentos?de=&ate=&status=`, `POST /pacientes/:id/agendamentos` (envia confirmação), `PATCH /agendamentos/:id`, `POST /agendamentos/:id/remarcar`, `POST /agendamentos/:id/cancelar`, `PUT /agendamentos/:id/link` (link + horário de envio), `POST /agendamentos/:id/link/enviar` (enviar agora / reenviar) |
 | Agenda | `GET /agenda?de=&ate=&servico=` (calendário), `GET /agenda/sugestao?servico=&dataProcedimento=` (data sugerida + horários já ocupados), `GET /agendamentos?status=solicitado,remarcacao_solicitada` (aguardando agendamento) |
 | Campanhas | `POST /campanhas`, `POST /campanhas/:id/enviar`, `GET /campanhas/:id` |

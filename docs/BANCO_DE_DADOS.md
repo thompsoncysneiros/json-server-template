@@ -103,7 +103,7 @@ Lista fixa de ações verificadas pela API, no formato `recurso.acao`:
 `pacientes.ver`, `pacientes.ver_dados_completos`, `pacientes.editar`,
 `implantacao.carga_inicial`, `pacientes.exportar_cadastro`, `observacoes.registrar`, `agendamentos.gerenciar`,
 `agendamentos.marcar_realizado`, `campanhas.enviar`, `fila.atender`,
-`fila.transferir`, `prontuario.registrar`, `telefones.validar`,
+`fila.transferir`, `prontuario.registrar`, `telefones.liberar`,
 `agenda.ver`, `relatorios.ver`,
 `relatorios.completos`, `admin.mensagens`, `admin.orientacoes`,
 `admin.formularios`, `admin.servicos`, `admin.prazos`, `admin.horarios`,
@@ -182,7 +182,7 @@ com trigram para busca por nome.
 | numero | varchar(20) | formato E.164 (`+5581...`) |
 | whatsapp | bool | |
 | principal | bool | um principal por paciente (índice único parcial) |
-| status | enum | `validado`, `nao_confirmado` (ex.: veio da carga inicial), `pendente_validacao` (número novo informado no bot – aguarda documento conferido), `inativo` |
+| status | enum | `validado` (liberado para este paciente), `nao_confirmado` (ex.: veio da carga inicial), `pendente_liberacao` (número novo – aguarda a equipe conferir a identidade), `recusado`, `inativo` |
 | relacao | enum | `proprio`, `responsavel_cuidador`, `familiar`, `outro` |
 | nome_contato | text null | quem atende neste número, se não for o paciente (ex.: "Ana – filha") |
 | validado_por | FK usuarios null | quem validou (null quando validado pela verificação no bot) |
@@ -478,6 +478,8 @@ stateDiagram-v2
 `id`, `mensagem_id`, `paciente_id`, `categoria` (`exame`, `documento_identidade`,
 `outro`), `arquivo_chave` (caminho no armazenamento privado), `mime`,
 `tamanho_bytes`, `nome_original`.
+`documento_identidade` é apagado logo após a equipe liberar/recusar o
+número ou validar o cadastro (fica só o registro de que foi conferido).
 
 ---
 
@@ -509,7 +511,7 @@ depender da **equipe** ou do **paciente** (mensagem 8.3).
 |---|---|---|
 | id | uuid PK | |
 | paciente_id | FK | |
-| tipo | enum | `agendar` (definir data de solicitação ou remarcação), `validar_telefone`, `validar_documento` (cadastro novo criado pelo bot), `ligar_sem_resposta`, `conferir_dados`, `paciente_enviar_documento`, `paciente_enviar_informacao`, `outro` |
+| tipo | enum | `agendar` (definir data de solicitação ou remarcação), `liberar_numero` (número novo pedindo atendimento de um paciente – 4.1.2), `validar_documento` (cadastro novo criado pelo bot), `ligar_sem_resposta`, `conferir_dados`, `paciente_enviar_documento`, `paciente_enviar_informacao`, `outro` |
 | responsavel | enum | `equipe`, `paciente` |
 | equipe_id | FK | equipe que acompanha (mesmo quando depende do paciente) |
 | solicitacao_paciente | text null | texto de `{{pendencia_descricao}}` ("cópia do exame de sangue") |

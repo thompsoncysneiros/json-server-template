@@ -88,7 +88,10 @@ Variáveis: `{{nome}}`, `{{nome_curto}}` (primeiro nome + inicial do sobrenome),
 | 12 | `geral.nao_entendido` | Todos | Resposta não reconhecida | Resposta | Menu de 6 opções |
 | M | `geral.menu` | Todos | Paciente inicia conversa | Resposta | Menu de 6 opções |
 | ID-C | `ident.pedir_cpf` | Todos | Sempre, no início da identificação | Resposta | – (CPF e depois data de nascimento) |
-| ID-F | `ident.pedir_documento` | Todos | Cadastro novo ou número novo (casos E/F) | Resposta | – (foto do documento) |
+| ID-E | `ident.numero_novo` | Todos | CPF confere, mas o número não está liberado para o paciente | Resposta | Sou o(a) paciente · Sou responsável/cuidador(a) · Sou familiar |
+| ID-F | `ident.pedir_documento` | Todos | Cadastro novo ou número novo (casos E/F) | Resposta | – (foto da identidade) |
+| ID-L | `ident.numero_liberado` | Todos | Equipe liberou o número para o paciente | Ativa | – (retoma o atendimento) |
+| ID-R | `ident.numero_recusado` | Todos | Equipe recusou a liberação | Ativa | – |
 | ID-X | `ident.falha` | Todos | Dado não confere / 3 falhas | Resposta | – |
 | A | `geral.aviso_privacidade` | Todos | Primeiro contato do número | Resposta | Entendi |
 | U | `geral.alerta_urgencia` | Todos | Palavra de alerta, em qualquer etapa | Resposta | – (atendimento urgente) |
@@ -450,6 +453,28 @@ Envie uma *foto do documento oficial com foto e CPF* do(a) paciente (RG, CNH ou 
 Nossa equipe vai conferir e dará continuidade por aqui.
 ```
 Até a conferência, o bot não informa consultas nem confirma dados.
+
+**ID-E `ident.numero_novo`** – CPF e data conferem, mas o número não está
+liberado para o paciente (antes da ID-F)
+```
+Este número ainda não está liberado para atendimento sobre este(a) paciente. 🔒
+Você é o(a) próprio(a) paciente ou alguém que cuida dele(a)?
+```
+Opções: **1 Sou o(a) paciente** · **2 Sou responsável/cuidador(a)** ·
+**3 Sou familiar**. Em seguida: "Qual o seu nome?" e a ID-F.
+
+**ID-L `ident.numero_liberado`**
+```
+Pronto! ✅ Nossa equipe conferiu a identidade e este número foi liberado para o atendimento de *{{nome_curto}}*.
+Vamos continuar de onde paramos.
+```
+O bot retoma a etapa que estava suspensa (ex.: registrar a confirmação).
+
+**ID-R `ident.numero_recusado`**
+```
+Não foi possível confirmar a identidade com o documento enviado. 🔒
+Por segurança, nossa equipe entrará em contato pelo telefone já cadastrado do(a) paciente.
+```
 
 **ID-X `ident.falha`**
 ```

@@ -437,7 +437,9 @@ tudo no log de eliminações. Relatório mensal para a Supervisão.
 | **Crianças e adolescentes** (art. 14) | Atender ao melhor interesse; comunicação com o responsável legal; identificar o responsável no cadastro e nas observações |
 | **Familiar/cuidador falando pelo paciente** | Comum em idosos. O telefone é registrado com a **relação** (cuidador, familiar) e o nome de quem atende. Recebe informações só após informar **CPF + data de nascimento do paciente** (CPF sempre exigido). Dúvida → equipe confirma o vínculo |
 | **Número compartilhado** (vários pacientes no mesmo telefone) | O **CPF informado escolhe o paciente** (nenhum nome é listado) e a data de nascimento confirma; toda mensagem ativa diz de qual paciente se trata; uma pergunta aberta por vez no número, para não misturar respostas |
-| **Troca de número / cadastro novo pelo bot** | Exige **foto de documento oficial com foto e CPF**; o número ou cadastro fica pendente até a equipe conferir; antes disso, nenhum dado é informado |
+| **Número novo pedindo atendimento de um paciente** | CPF + data de nascimento e **foto da identidade do paciente**; o atendimento fica suspenso até a equipe **liberar o número para aquele paciente**; a liberação é registrada (quem, quando) e a foto é apagada após a decisão |
+| **Cadastro novo pelo bot** | Exige **foto de documento oficial com foto e CPF**; cadastro aguardando validação até a equipe conferir; antes disso, nenhum dado é informado |
+| **Verificação em toda conversa** | Para falar sobre qualquer paciente, sempre CPF + data de nascimento – o número liberado não dispensa a verificação |
 | **Tentativas de verificação** | 3 falhas → bloqueio de 30 min e aviso à equipe; tentativas registradas sem guardar o valor digitado |
 | **Decisões automatizadas** (art. 20) | O bot apenas organiza e prioriza; nenhuma decisão de acesso a atendimento é tomada sem humano |
 | **Dados de terceiros nas conversas** | Não são cadastrados; se relevantes, registrados de forma mínima em observação |
