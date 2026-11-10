@@ -18,7 +18,8 @@ Planejamento – nada implementado ainda. Ver [`REQUISITOS.md`](REQUISITOS.md),
 | Front-end | **React + Vite**, TanStack Query, componente de calendário (FullCalendar) | Painel web |
 | WhatsApp | **Baileys** (`@whiskeysockets/baileys`, versão fixada) | Decisão da equipe: sem custo e sem aprovação de modelos. Não oficial – riscos e mitigações em `REQUISITOS.md`, seção 6 |
 | Anexos | Armazenamento privado em disco da VPS (ou S3 compatível) | Exames e documentos – nunca públicos |
-| Deploy | **Docker Compose** + Nginx (HTTPS) na VPS | Sobe tudo com um comando; mesmo setup em teste e produção |
+| Deploy | **Modelo híbrido**: Nginx, PostgreSQL, Redis e ClamAV instalados no sistema operacional; API, worker e gateway em contêineres Docker sem privilégios; provisionamento por script (Ansible) | Dados com patches automáticos e backup nativo; app isolada e portátil (Oracle ARM → ATI). Ver `NECESSIDADES_TECNICAS.md`, seção 5 |
+| Hospedagem | Oracle Cloud Always Free (São Paulo) → ATI/UPE se autorizado | Custo zero, dados no Brasil |
 
 O bot fala com o WhatsApp por uma camada de **provedor**: se o número for
 bloqueado ou o hospital migrar para a API oficial da Meta, troca-se só essa
@@ -312,8 +313,9 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 - Credenciais da conexão do Baileys criptografadas no banco (equivalem à
   senha do número); QR code exibido só para Admin/Supervisão.
 - Anexos fora da pasta pública, servidos só para usuário autenticado.
-- Backup diário do PostgreSQL criptografado, fora da VPS, 30 dias de
-  retenção, teste de restauração mensal.
+- Backup em 3 cópias criptografadas na origem e no Brasil (pgBackRest com WAL
+  contínuo + restic), retenção máxima de 6 meses, registro de eliminações
+  reaplicado após restauração – `NECESSIDADES_TECNICAS.md`, seção 7.
 - 2FA (TOTP) obrigatório para Admin e Supervisão; bloqueio após 5 tentativas;
   sessão expira após 30 min sem uso.
 - Exportação e anonimização de um paciente (atendimento aos direitos do
@@ -338,7 +340,7 @@ Eventos Socket.IO: `atendimento.novo`, `atendimento.atualizado`,
 | Etapa | Dias | Entregas |
 |---|---|---|
 | 0. Preparação | antes | VPS, chip de teste para o Baileys |
-| 1. Base | 1–3 | Monorepo, Docker Compose, schema e migrações, auth com níveis de acesso, seed fictício |
+| 1. Base | 1–3 | Monorepo, provisionamento do servidor (Ansible) e Docker Compose da aplicação, schema e migrações, auth com níveis de acesso, seed fictício |
 | 2. Cadastro e agenda | 3–5 | Pacientes, observações, serviços, agendamentos, lista com cores/filtros, carga inicial da planilha |
 | 3. WhatsApp + bot MVP | 5–8 | Gateway Baileys (conexão, QR, reconexão), provedor, modelos de mensagem, primeiro contato, confirmação, confirmação de presença, encaminhamento (com fora do horário), fila, chat, notificações |
 | 4. Jobs | 8–10 | Não resposta (2 lembretes), lembrete da consulta, envio do link, agradecimento/avaliação, travas de tempo, disparo em lote |

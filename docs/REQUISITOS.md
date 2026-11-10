@@ -13,7 +13,9 @@ Documentos relacionados:
 - [`MENSAGENS.md`](MENSAGENS.md) – catálogo dos textos do bot, gatilhos e
   ajustes sugeridos.
 - [`NECESSIDADES_TECNICAS.md`](NECESSIDADES_TECNICAS.md) – necessidades de
-  servidor, rede, segurança e LGPD para a TI/infra da UPE.
+  servidor, rede, backup e segurança para a ATI/TI da UPE.
+- [`PLANO_PROTECAO_DADOS.md`](PLANO_PROTECAO_DADOS.md) – plano de segurança e
+  proteção de dados (LGPD).
 
 ---
 
@@ -680,13 +682,16 @@ Tudo isso alimenta a **linha do tempo** da ficha do paciente (3.2).
       só essa camada, sem refazer o sistema.
   - **[DEPENDÊNCIA]** chip/número dedicado e um celular para ele. Para
     testes: um chip de teste qualquer (sem dados reais).
-- **Hospedagem**: **[DEPENDÊNCIA]** contratação da VPS do hospital/projeto.
-  Requisitos mínimos: 2 vCPU, 4 GB de RAM, 80 GB SSD, Ubuntu 24.04 LTS,
-  **datacenter no Brasil** (simplifica a LGPD quanto a transferência
-  internacional), IP fixo e domínio com HTTPS. Plano B para testes: VPS da
-  empresa do Thompson **apenas com dados fictícios** e número de teste.
-- **Backups**: diários, criptografados, guardados fora da VPS, retenção de
-  30 dias; teste de restauração mensal.
+- **Hospedagem**: fase 1 na **Oracle Cloud Always Free** (região São Paulo,
+  ARM 4 OCPU / 24 GB RAM / 200 GB); fase 2, se a ATI autorizar, migração
+  para servidor da ATI/UPE. Domínio pretendido:
+  `saudedigitalprocape.pe.gov.br`. Modelo de produção **híbrido** (dados
+  instalados no sistema operacional, aplicação em contêineres sem
+  privilégios). Detalhes em `NECESSIDADES_TECNICAS.md`.
+- **Backups**: 3 cópias criptografadas no Brasil (local, Oracle Object
+  Storage, storage ATI/UPE), retenção máxima de 6 meses, registro de
+  eliminações reaplicado após restauração. Detalhes em
+  `NECESSIDADES_TECNICAS.md` (seção 7) e `PLANO_PROTECAO_DADOS.md`.
 
 ### 6.1 LGPD – decisões
 | Tema | Decisão |
@@ -787,17 +792,20 @@ Todas são **configuráveis** na área administrativa quando fizer sentido.
 | 12 | Regra final de não resposta | Sem cancelamento automático; 🔵 + pendência "ligar"; destaque se faltar < 48h | Cancelar sozinho poderia tirar a vaga de um paciente da regulação |
 | 13 | Palavras de urgência | Orientação imediata de emergência (192) + prioridade urgente | Segurança do paciente; o bot não avalia clinicamente |
 | 14 | Retenção de dados | 5 anos após o último contato → anonimização; anexos apagados 90 dias após a consulta | Minimização; o sistema não é o prontuário oficial |
-| 15 | Hospedagem | VPS no Brasil, requisitos mínimos na seção 6 | LGPD e desempenho |
+| 15 | Hospedagem | Oracle Always Free (São Paulo) → ATI/UPE se autorizado; modelo híbrido | LGPD (dados no Brasil), custo zero, portabilidade |
 | 16 | Disponibilidade de horários pelo Atendente | Não se aplica (sem autoagendamento) | – |
 
 **Dependências externas (não são decisões de sistema):**
-1. Contratar a VPS (Mari / TI).
+1. Conta Oracle Cloud institucional (fase 1) e, se autorizado, servidor da
+   ATI (fase 2); domínio `saudedigitalprocape.pe.gov.br` com a ATI.
 2. Chip/número institucional dedicado + celular com WhatsApp Business para
-   conectar ao Baileys.
+   conectar ao Baileys – responsabilidade do **NUTES / Saúde Digital**. Se a
+   ATI fornecer acesso à API oficial do WhatsApp, o Baileys é substituído.
 3. Equipe validar as mensagens – lista exata do que validar em
    `MENSAGENS.md`, seção 6 (textos ajustados, textos novos e conteúdo das
    Orientações).
 4. Equipe de enfermagem/médica revisar a mensagem de urgência (U).
-5. Encarregado (DPO) do hospital revisar o aviso de privacidade e a seção 6.1.
+5. Encarregado (DPO) do hospital validar o `PLANO_PROTECAO_DADOS.md`, o
+   aviso de privacidade e o RIPD.
 6. Links dos formulários de avaliação por serviço.
 

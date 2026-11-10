@@ -69,7 +69,7 @@ Agrupamento:
 | Mensagens | `modelos_mensagem`, `comunicacoes`, `campanhas`, `campanha_destinatarios`, `orientacoes`, `formularios` |
 | Conversa | `conversas`, `mensagens`, `anexos` |
 | Trabalho da equipe | `atendimentos_humanos`, `pendencias`, `notificacoes` |
-| Sistema | `whatsapp_conexao`, `horarios_atendimento`, `feriados`, `tarefas_agendadas`, `configuracoes`, `auditoria` |
+| Sistema | `whatsapp_conexao`, `horarios_atendimento`, `feriados`, `tarefas_agendadas`, `configuracoes`, `auditoria`, `registro_eliminacoes` |
 
 ---
 
@@ -555,8 +555,18 @@ Chave/valor (`jsonb`) editável pela coordenação:
 | `seguranca.sessao_inatividade_min` | 30 |
 | `seguranca.tentativas_login` | 5 (bloqueio de 15 min) |
 | `lgpd.retencao_anos_apos_ultimo_contato` | 5 |
+| `lgpd.meses_pre_cadastro_sem_interacao` | 12 (depois, eliminação) |
 | `lgpd.dias_manter_anexos_apos_consulta` | 90 |
 | `auditoria.retencao_anos` | 5 |
+
+### `registro_eliminacoes`
+Lista das eliminações e anonimizações feitas (por rotina automática ou
+pedido do titular), **sem dados pessoais**: `id`, `entidade`,
+`entidade_id` (identificador interno), `acao` (`eliminado`, `anonimizado`),
+`motivo` (`prazo`, `pedido_titular`, `pre_cadastro_sem_interacao`,
+`anexo_vencido`), `executado_em`, `executado_por`.
+**Reaplicada automaticamente após qualquer restauração de backup**, para que
+nada eliminado volte (`PLANO_PROTECAO_DADOS.md`, seção 11).
 
 ### `auditoria`
 `id`, `usuario_id`, `acao` (`visualizou_paciente`, `alterou`, `exportou`,
